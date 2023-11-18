@@ -13,6 +13,7 @@ import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:video_player/video_player.dart';
 
+import '../Component Widgets/Drawer.dart';
 import '../main.dart';
 import '../model/InstaPost.dart';
 import '../model/InstaStories.dart';
@@ -100,40 +101,7 @@ class _DownloadVideoScreenState extends State<DownloadPostScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(
-                color: Colors.blue,
-              ),
-              child: Center(child: Text('Ins Downloader')),
-            ),
-            // ListTile(
-            //   title: const Text('Collection'),
-            //   onTap: () => Navigator.pushReplacement(
-            //     context,
-            //     MaterialPageRoute(builder: (context) => HomePage()),
-            //   ),
-            // ),
-            ListTile(
-              title: const Text('Download Post'),
-              onTap: () => Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => HomePage()),
-              ),
-            ),
-            ListTile(
-              title: const Text('Download Stories'),
-              onTap: () => Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => DownloadStoryScreen()),
-              ),
-            ),
-          ],
-        ),
-      ),
+      drawer: drawerForScreen(context),
       appBar: AppBar(
         title: const Text('Download Post'),
       ),

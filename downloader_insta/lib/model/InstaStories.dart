@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:dio/dio.dart';
 
 import '../rapidapi_service/illusion_story_api.dart';
+import '../rapidapi_service/maatootz_story_api.dart';
 import '../rapidapi_service/vahota_api.dart';
 import 'instaApi.dart'; // import http package for API calls
 
@@ -87,38 +88,47 @@ Future<List<dynamic>> getStoriesAllData(String storiesUrl) async {
   String patternUrl = '';
   String usernameUrl = '';
   int countApiRequest = 0;
+  //checkIsPrivate is in illusion_story_api.dart file
+  checkPrivate = await checkIsPrivate(usernameUrl);
   if (storiesUrl.contains('www.')) {
     patternUrl = storiesUrl.substring(
       34,
     );
     usernameUrl = patternUrl.substring(0, patternUrl.indexOf("/"));
-  } else {
+  } else if (storiesUrl.contains('highlights')){
     patternUrl = storiesUrl.substring(
-      30,
+      34,
     );
-    usernameUrl = patternUrl.substring(0, patternUrl.indexOf("/"));
+    usernameUrl = await getUsername(storiesUrl);
+  } else {
+  patternUrl = storiesUrl.substring(
+  30,
+  );
+  usernameUrl = patternUrl.substring(0, patternUrl.indexOf("/"));
   }
 
-  checkPrivate = await checkIsPrivate(usernameUrl);
+
   if (checkPrivate == true) {
   } else if (countApiRequest == 0) {
     print('usernameUrl $usernameUrl');
 
     final response = await vahotaStoryApiRequest(usernameUrl);
-    print(response.body);
+    print(response.data);
 
-    var data = json.decode(response.body);
-    if (response.statusCode == 200 && response.body.toString().isNotEmpty) {
+    var data = json.decode(response.data);
+    if (response.statusCode == 200 && response.data.toString().isNotEmpty) {
       Map body = data['body'];
       List<dynamic>? stories = body['stories'];
       for (int i = 0; i < stories!.length; i++) {
         InstaStories instaStories = new InstaStories();
         Map image_versions2 = stories![i]['image_versions2'];
-        List<dynamic>? candidates = image_versions2['candidates'];
-        if (candidates![i].toString().contains(".mp4")) {
+
+        if (stories![i].toString().contains('video_versions')) {
+          List<dynamic>? video_versions = stories![i]['video_versions'];
           instaStories.isVideo = true;
           instaStories.displayUrl =
-              "${candidates!.first['url'].toString()}.mp4";
+              "${video_versions!.first['url'].toString()}";
+          //video_versions!.first['url'].toString()
           instaStories._thumbnail = await VideoThumbnail.thumbnailData(
             video: instaStories._displayUrl!,
             imageFormat: ImageFormat.JPEG,
@@ -127,8 +137,8 @@ Future<List<dynamic>> getStoriesAllData(String storiesUrl) async {
             // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
             quality: 100,
           );
-        } else if (candidates![i].toString().contains(".jpg") ||
-            candidates![i].toString().contains(".png")) {
+        } else {
+          List<dynamic>? candidates = image_versions2!['candidates'];
           instaStories.isVideo = false;
           instaStories.displayUrl = candidates!.first['url'].toString();
         }
@@ -142,10 +152,10 @@ Future<List<dynamic>> getStoriesAllData(String storiesUrl) async {
     print('usernameUrl $usernameUrl');
 
     final response = await illusionStoryApiRequest(usernameUrl);
-    print(response.body);
+    print(response.data);
 
-    var data = json.decode(response.body);
-    if (response.statusCode == 200 && response.body.toString().isNotEmpty) {
+    var data = json.decode(response.data);
+    if (response.statusCode == 200 && response.data.toString().isNotEmpty) {
       for (int i = 0; i < data.length; i++) {
         InstaStories instaStories = new InstaStories();
         if (data[i].toString().contains(".mp4")) {
@@ -175,11 +185,11 @@ Future<List<dynamic>> getStoriesAllData(String storiesUrl) async {
   } else if (countApiRequest == 2) {
     print('usernameUrl $usernameUrl');
 
-    final response = await illusionStoryApiRequest(usernameUrl);
-    print(response.body);
+    final response = await maatootzStoryApiRequest(usernameUrl);
+    print(response.data);
 
-    var data = json.decode(response.body);
-    if (response.statusCode == 200 && response.body.toString().isNotEmpty) {
+    var data = json.decode(response.data);
+    if (response.statusCode == 200 && response.data.toString().isNotEmpty) {
       for (int i = 0; i < data.length; i++) {
         InstaStories instaStories = new InstaStories();
         if (data[i].toString().contains(".mp4")) {
@@ -211,17 +221,59 @@ Future<List<dynamic>> getStoriesAllData(String storiesUrl) async {
   return allDataApi;
 }
 
-Future<bool> checkIsPrivate(String username) async {
-  final url =
-      Uri.parse('https://www.instagram.com/' + username + '/?__a=1&__d=dis');
 
-  final response = await http.get(
-    url,
-  );
+//start mutual methods
+Future<bool> checkIsPrivate(String username) async{
 
-  var data = json.decode(response.body);
+
+  final response = await Dio().get(
+      'https://www.instagram.com/'+username+'/?__a=1&__d=dis');
+
+  var data = json.decode(response.data);
   Map items = data['graphql'];
   Map user = items['user'];
   bool is_private = user['is_private'];
   return is_private;
 }
+//"message" -> "Please wait a few minutes before you try again."
+
+Future<String> getUsername(String url) async {
+  final urlRequest = Uri.parse(url + '/?__a=1&__d=dis');
+
+  // final response = await http.get(
+  //   url,
+  // );
+
+  final response = await Dio().get(
+    url,
+  );
+  String username = '';
+
+  var data = json.decode(response.data);
+  if (data
+      .toString()
+      .contains("Please wait a few minutes before you try again.")) {
+    return username;
+  } else {
+    username = data['user']['username'].toString();
+    return username;
+  }
+}
+/*
+* json for highlight get request api after add /?__a=1&__d=dis
+* {
+	"user": {
+		"id": "1152500318",
+		"profile_pic_url": "https://instagram.fsgn2-9.fna.fbcdn.net/v/t51.2885-19/398839605_2043866312639963_3562212760234049305_n.jpg?stp=dst-jpg_s150x150&_nc_ht=instagram.fsgn2-9.fna.fbcdn.net&_nc_cat=111&_nc_ohc=WM7HAkYTj4kAX_uO56W&edm=AKGtDmEBAAAA&ccb=7-5&oh=00_AfDz1abFLzXXaVnZGTi49dVH9-Yl7KlXyiD8fVwZBZq6wg&oe=655756A2&_nc_sid=2078dd",
+		"username": "duongle.fitness"
+	},
+	"highlight": {
+		"id": 18045959020472376,
+		"title": "Mục đít chính"
+	},
+	"showQRModal": false
+}
+* */
+
+
+//end mutual methods

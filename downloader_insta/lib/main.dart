@@ -6,16 +6,17 @@ import 'package:downloader_insta/admob_service/ads_service.dart';
 import 'package:flick_video_player/flick_video_player.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_file_downloader/flutter_file_downloader.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
-// import 'package:flutter_downloader/flutter_downloader.dart';
-import 'package:flutter_image_slideshow/flutter_image_slideshow.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 // import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:extended_image/extended_image.dart';
+import 'package:in_app_update/in_app_update.dart';
 import 'package:video_player/video_player.dart';
 
+import 'Component Widgets/Drawer.dart';
 import 'Screens/DownloadPostScreen.dart';
 import 'Screens/DownloadStoryScreen.dart';
 import 'applovin_service/ads_service.dart';
@@ -62,9 +63,12 @@ class _HomePageState extends State<HomePage>
   // bool isAdLoaded = false;
   // InterstitialAd? _interstitialAd;
   // RewardedAd? _rewardedAd;
-  int _rewardedScore = 0;
 
-  InstaImage instaImage = InstaImage();
+  AppUpdateInfo? _updateInfo;
+  GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey();
+  bool _flexibleUpdateAvailable = false;
+
+
   FlutterInsta flutterInsta =
       FlutterInsta(); // create instance of FlutterInsta class
   TextEditingController usernameController = TextEditingController();
@@ -90,6 +94,8 @@ class _HomePageState extends State<HomePage>
         ),
   );
 
+
+
   var _interstitialRetryAttempt = 0;
   var _rewardedAdRetryAttempt = 0;
 
@@ -99,23 +105,68 @@ class _HomePageState extends State<HomePage>
   final MaxNativeAdViewController _nativeAdViewController =
       MaxNativeAdViewController();
 
+  MaxAd? nativeAd1;
+
+
+  InAppWebViewController? webViewController;
+  PullToRefreshController? refreshController;
+  late var url;
+  double progress = 0;
+  var urlController = TextEditingController();
+  // var initialUrl = "https://www.google.com/";
+
+  String initialUrl =
+      // "https://instagram.fsgn2-10.fna.fbcdn.net/o1/v/t16/f1/m69/GICWmABrFzu-Ax0DABFXYwcJHwg3bkYLAAAF.mp4?efg=eyJxZV9ncm91cHMiOiJbXCJpZ193ZWJfZGVsaXZlcnlfdnRzX290ZlwiXSIsInZlbmNvZGVfdGFnIjoidnRzX3ZvZF91cmxnZW4uY2Fyb3VzZWxfaXRlbS5jMi43MjAuYmFzZWxpbmUifQ&_nc_ht=instagram.fsgn2-10.fna.fbcdn.net&_nc_cat=109&vs=987154402357115_3229001429&_nc_vs=HBkcFQIYOnBhc3N0aHJvdWdoX2V2ZXJzdG9yZS9HSUNXbUFCckZ6dS1BeDBEQUJGWFl3Y0pId2czYmtZTEFBQUYVAALIAQAoABgAGwGIB3VzZV9vaWwBMBUAACbAnO6gz8eHQBUCKAJDMywXQEcmZmZmZmYYEmRhc2hfYmFzZWxpbmVfMV92MREAde4HAA%3D%3D&_nc_rid=9def2335ed&ccb=9-4&oh=00_AfC7tV1mO7vo_zyjdYVMcOO0BpElfA_IUngF2Hlz40aHlQ&oe=6558A56F&_nc_sid=4f4799"
+  "https://instagram.fsgn2-8.fna.fbcdn.net/o1/v/t16/f1/m69/GMDLoRc_ExR41Z0CAHLm2TWwC1pUbkYLAAAF.mp4?efg=eyJxZV9ncm91cHMiOiJbXCJpZ193ZWJfZGVsaXZlcnlfdnRzX290ZlwiXSIsInZlbmNvZGVfdGFnIjoidnRzX3ZvZF91cmxnZW4uY2Fyb3VzZWxfaXRlbS5jMi43MjAuYmFzZWxpbmUifQ&_nc_ht=instagram.fsgn2-8.fna.fbcdn.net&_nc_cat=102&vs=3168204693473839_2317145144&_nc_vs=HBksFQIYOnBhc3N0aHJvdWdoX2V2ZXJzdG9yZS9HTURMb1JjX0V4UjQxWjBDQUhMbTJUV3dDMXBVYmtZTEFBQUYVAALIAQAVAhg6cGFzc3Rocm91Z2hfZXZlcnN0b3JlL0dLMktxeGRaaWlnS3RpSURBRUdnczZveXJzUnZia1lMQUFBRhUCAsgBACgAGAAbAYgHdXNlX29pbAEwFQAAJqSB7u%2BUpcQ%2FFQIoAkMzLBdAIrtkWhysCBgSZGFzaF9iYXNlbGluZV8xX3YxEQB17gcA&_nc_rid=6a81edf6ea&ccb=9-4&oh=00_AfAN__njHdfRXPorzbK2PlzFwZaHeb2WzrII7xlYbO_vhQ&oe=655880FD&_nc_sid=4f4799"
+
+  ;
+
+  Future<void> checkForUpdate() async {
+    InAppUpdate.checkForUpdate().then((info) {
+      setState(() {
+        _updateInfo = info;
+      });
+    }).catchError((e) {
+      showSnack(e.toString());
+    });
+  }
+
+  void showSnack(String text) {
+    if (_scaffoldKey.currentContext != null) {
+      ScaffoldMessenger.of(_scaffoldKey.currentContext!)
+          .showSnackBar(SnackBar(content: Text(text)));
+    }
+  }
+
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_){
+      checkForUpdate();
+    });
+
+    refreshController = PullToRefreshController(
+        onRefresh: () {
+       webViewController!.reload();
+        },
+        options: PullToRefreshOptions(
+            color: Colors.white, backgroundColor: Colors.black87));
+
     // _initBannerAd();
     // _createRewardedAd();
     // _createInterstitialAd();
 
-    initializeBannerAds();
-    initializeMRecAds();
+    // initializeBannerAds();
+    // initializeMRecAds();
+    _nativeAdViewController.loadAd();
     initializeInterstitialAds();
     initializeRewardedAd();
   }
 
   @override
   void dispose() {
-    super.dispose();
+    // super.dispose();
     // _interstitialAd?.dispose();
     // _rewardedAd?.dispose();
     // _rewardedInterstitialAd?.dispose();
@@ -171,7 +222,9 @@ class _HomePageState extends State<HomePage>
     ));
 
     // Load the first interstitial
-    AppLovinMAX.loadInterstitial("e5b9327c1c3d7cb6");
+    Future.delayed(Duration(milliseconds: 1000), () {
+      AppLovinMAX.loadInterstitial("e5b9327c1c3d7cb6");
+    });
   }
 
   void initializeRewardedAd() {
@@ -289,40 +342,8 @@ class _HomePageState extends State<HomePage>
       //         child: AdWidget(ad: bannerAd!),
       //       )
       //     : const SizedBox(),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(
-                color: Colors.blue,
-              ),
-              child: Center(child: Text('Ins Downloader')),
-            ),
-            // ListTile(
-            //   title: const Text('Collection'),
-            //   onTap: () => Navigator.pushReplacement(
-            //     context,
-            //     MaterialPageRoute(builder: (context) => HomePage()),
-            //   ),
-            // ),
-            ListTile(
-              title: const Text('Download Post'),
-              onTap: () => Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => HomePage()),
-              ),
-            ),
-            ListTile(
-              title: const Text('Download Stories'),
-              onTap: () => Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => DownloadStoryScreen()),
-              ),
-            ),
-          ],
-        ),
-      ),
+      key:_scaffoldKey,
+      drawer: drawerForScreen(context),
       appBar: AppBar(
         // title: const Text('User\'s Details'),
         title: const Text('Download Post'),
@@ -432,6 +453,108 @@ class _HomePageState extends State<HomePage>
                 ),
               ],
             ),
+            //Native ad
+            // Container(
+            //   margin: const EdgeInsets.all(8.0),
+            //   height: 300,
+            //   child: MaxNativeAdView(
+            //     adUnitId: ApplovinService.nativeAdMSmallUnit,
+            //     // ApplovinService.nativeAdMediumUnit,
+            //     controller: _nativeAdViewController,
+            //     listener: NativeAdListener(onAdLoadedCallback: (ad) {
+            //       print('Native ad loaded from ${ad.networkName}');
+            //
+            //       setState(() {
+            //         _nativeAdViewController.loadAd();
+            //         _mediaViewAspectRatio = ad.nativeAd?.mediaContentAspectRatio ?? _kMediaViewAspectRatio;
+            //       });
+            //     },
+            //         onAdLoadFailedCallback: (adUnitId, error) {
+            //       print('Native ad failed to load with error code ${error.code} and message: ${error.message}');
+            //     },
+            //         onAdClickedCallback: (ad) {
+            //       print('Native ad clicked');
+            //     },
+            //         onAdRevenuePaidCallback: (ad) {
+            //       print('Native ad revenue paid: ${ad.revenue}');
+            //     }),
+            //     child: Container(
+            //       color: const Color(0xffefefef),
+            //       padding: const EdgeInsets.all(8.0),
+            //       child: Column(
+            //         mainAxisSize: MainAxisSize.min,
+            //         children: [
+            //           Row(
+            //             mainAxisAlignment: MainAxisAlignment.center,
+            //             children: [
+            //               Container(
+            //                 padding: const EdgeInsets.all(4.0),
+            //                 child: const MaxNativeAdIconView(
+            //                   width: 48,
+            //                   height: 48,
+            //                 ),
+            //               ),
+            //               Flexible(
+            //                 child: Column(
+            //                   mainAxisAlignment: MainAxisAlignment.start,
+            //                   crossAxisAlignment: CrossAxisAlignment.start,
+            //                   children: [
+            //                     MaxNativeAdTitleView(
+            //                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            //                       maxLines: 1,
+            //                       overflow: TextOverflow.visible,
+            //                     ),
+            //                     MaxNativeAdAdvertiserView(
+            //                       style: TextStyle(fontWeight: FontWeight.normal, fontSize: 10),
+            //                       maxLines: 1,
+            //                       overflow: TextOverflow.fade,
+            //                     ),
+            //                     MaxNativeAdStarRatingView(
+            //                       size: 10,
+            //                     ),
+            //                   ],
+            //                 ),
+            //               ),
+            //               const MaxNativeAdOptionsView(
+            //                 width: 20,
+            //                 height: 20,
+            //               ),
+            //             ],
+            //           ),
+            //           Row(
+            //             mainAxisAlignment: MainAxisAlignment.start,
+            //             children: [
+            //               Flexible(
+            //                 child: MaxNativeAdBodyView(
+            //                   style: TextStyle(fontWeight: FontWeight.normal, fontSize: 14),
+            //                   maxLines: 3,
+            //                   overflow: TextOverflow.ellipsis,
+            //                 ),
+            //               ),
+            //             ],
+            //           ),
+            //           const SizedBox(height: 8),
+            //           Expanded(
+            //             child: AspectRatio(
+            //               aspectRatio: _mediaViewAspectRatio,
+            //               child: const MaxNativeAdMediaView(),
+            //             ),
+            //           ),
+            //           const SizedBox(
+            //             width: double.infinity,
+            //             child: MaxNativeAdCallToActionView(
+            //               style: ButtonStyle(
+            //                 backgroundColor: MaterialStatePropertyAll<Color>(Color(0xff2d545e)),
+            //                 textStyle: MaterialStatePropertyAll<TextStyle>(TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            //               ),
+            //             ),
+            //           ),
+            //         ],
+            //       ),
+            //     ),
+            //   ),
+            // ),
+            //MREC ad
             MaxAdView(
                 adUnitId: ApplovinService.mrecAdUnitScreen!,
                 adFormat: AdFormat.mrec,
@@ -441,6 +564,29 @@ class _HomePageState extends State<HomePage>
                     onAdClickedCallback: (ad) {},
                     onAdExpandedCallback: (ad) {},
                     onAdCollapsedCallback: (ad) {})),
+            // Container(
+            //   width: 300.w,
+            //   height: 500.h,
+            //   child:
+            //   ClipRRect(
+            //     borderRadius: BorderRadius.circular(16),
+            //     child: InAppWebView(
+            //       onLoadStart: (controller, url) {
+            //         // var v = url.toString();
+            //         // setState(() {
+            //         //   urlController.text = v;
+            //         // });
+            //       },
+            //       onLoadStop: (controller, url) {
+            //         refreshController!.endRefreshing();
+            //       },
+            //       pullToRefreshController: refreshController,
+            //       onWebViewCreated: (controller) => webViewController = controller,
+            //       initialUrlRequest: URLRequest(url: Uri.parse(initialUrl)),
+            //     ),
+            //   ),
+            // ),
+
             pressed
                 ? showListData!.isNotEmpty
                     ? SingleChildScrollView(
@@ -667,7 +813,7 @@ class _HomePageState extends State<HomePage>
                                                               builder: (context) =>
                                                                   ViewImage(
                                                                       showListData![
-                                                                          index])),
+                                                                          index],webViewController,refreshController)),
                                                         );
                                                       },
                                                       child: Text(
@@ -1448,7 +1594,7 @@ class _HomePageState extends State<HomePage>
   //     );
   // }
 
-//Download image and video on button clickl
+//Download image and video on button click
   void downloadData(dynamic inputData) async {
     if (inputData.listFeedImagesUrl! == null ||
         inputData.listFeedImagesUrl! == []) {
@@ -1502,48 +1648,103 @@ class _HomePageState extends State<HomePage>
   }
 
   void downloadVideo(InstaPost inputData) async {
-    FileDownloader.downloadFile(
-        url: inputData.displayUrl!,
-        name: "${inputData.id}_${inputData.shortcode}.mp4",
-        onProgress: (String? fileName, double? progress) {
-          print('FILE fileName HAS PROGRESS $progress');
-        },
-        onDownloadCompleted: (String path) {
-          Fluttertoast.showToast(
-              msg: "Succesfully Downloaded",
-              toastLength: Toast.LENGTH_SHORT,
-              gravity: ToastGravity.BOTTOM,
-              timeInSecForIosWeb: 1,
-              backgroundColor: Colors.grey,
-              textColor: Colors.white,
-              fontSize: 16.0);
-        },
-        onDownloadError: (String error) {
-          Fluttertoast.showToast(
-              msg: "Please try it again",
-              toastLength: Toast.LENGTH_SHORT,
-              gravity: ToastGravity.BOTTOM,
-              timeInSecForIosWeb: 1,
-              backgroundColor: Colors.grey,
-              textColor: Colors.white,
-              fontSize: 16.0);
-        });
+    if (inputData.isVideo) {
+      // final baseStorage = await getExternalStorageDirectory();
+      if (inputData.id.toString().isEmpty &&
+          inputData.shortcode.toString().isEmpty) {
+        // int today = DateTime.now().
+        FileDownloader.downloadFile(
+            url: inputData.displayUrl!,
+            name:
+            "com_helpfulapps_downloader_insta-${DateTime.now().millisecondsSinceEpoch}.mp4",
+            onProgress: (String? fileName, double? progress) {
+              print('FILE fileName HAS PROGRESS $progress');
+            },
+            onDownloadCompleted: (String path) {
+              Fluttertoast.showToast(
+                  msg: "Succesfully Downloaded",
+                  toastLength: Toast.LENGTH_SHORT,
+                  gravity: ToastGravity.BOTTOM,
+                  timeInSecForIosWeb: 1,
+                  backgroundColor: Colors.grey,
+                  textColor: Colors.white,
+                  fontSize: 16.0);
+            },
+            onDownloadError: (String error) {
+              Fluttertoast.showToast(
+                  msg: "Please try it again",
+                  toastLength: Toast.LENGTH_SHORT,
+                  gravity: ToastGravity.BOTTOM,
+                  timeInSecForIosWeb: 1,
+                  backgroundColor: Colors.grey,
+                  textColor: Colors.white,
+                  fontSize: 16.0);
+            });
+      } else {
+        FileDownloader.downloadFile(
+            url: inputData.displayUrl!,
+            name:
+            "com_helpfulapps_downloader_insta-${inputData.id}_${inputData.shortcode}",
+            onProgress: (String? fileName, double? progress) {
+              print('FILE fileName HAS PROGRESS $progress');
+            },
+            onDownloadCompleted: (String path) {
+              Fluttertoast.showToast(
+                  msg: "Succesfully Downloaded",
+                  toastLength: Toast.LENGTH_SHORT,
+                  gravity: ToastGravity.BOTTOM,
+                  timeInSecForIosWeb: 1,
+                  backgroundColor: Colors.grey,
+                  textColor: Colors.white,
+                  fontSize: 16.0);
+            },
+            onDownloadError: (String error) {
+              Fluttertoast.showToast(
+                  msg: "Please try it again",
+                  toastLength: Toast.LENGTH_SHORT,
+                  gravity: ToastGravity.BOTTOM,
+                  timeInSecForIosWeb: 1,
+                  backgroundColor: Colors.grey,
+                  textColor: Colors.white,
+                  fontSize: 16.0);
+            });
+      }
+    }
   }
 
   void downloadImage(dynamic inputData) async {
-    var response = await Dio().get("${inputData.displayUrl}",
-        options: Options(responseType: ResponseType.bytes));
-    await ImageGallerySaver.saveImage(Uint8List.fromList(response.data),
-        quality: 60, name: "${inputData.id}_${inputData.shortcode}.jpg");
+    if (inputData.id.toString().isEmpty &&
+        inputData.shortcode.toString().isEmpty) {
+      //com_helpfulapps_downloader_insta-${DateTime.now().millisecondsSinceEpoch}.mp4
+      var response = await Dio().get("${inputData.displayUrl}",
+          options: Options(responseType: ResponseType.bytes));
+      await ImageGallerySaver.saveImage(Uint8List.fromList(response.data),
+          quality: 60, name: "com_helpfulapps_downloader_insta-${DateTime.now().millisecondsSinceEpoch}.jpg");
 
-    Fluttertoast.showToast(
-        msg: "Succesfully Downloaded",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.grey,
-        textColor: Colors.white,
-        fontSize: 16.0);
+      Fluttertoast.showToast(
+          msg: "Succesfully Downloaded",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.grey,
+          textColor: Colors.white,
+          fontSize: 16.0);
+    } else {
+      //com_helpfulapps_downloader_insta-${DateTime.now().millisecondsSinceEpoch}.mp4
+      var response = await Dio().get("${inputData.displayUrl}",
+          options: Options(responseType: ResponseType.bytes));
+      await ImageGallerySaver.saveImage(Uint8List.fromList(response.data),
+          quality: 60, name: "com_helpfulapps_downloader_insta-${inputData.id}_${inputData.shortcode}.jpg");
+
+      Fluttertoast.showToast(
+          msg: "Succesfully Downloaded",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.grey,
+          textColor: Colors.white,
+          fontSize: 16.0);
+    }
   }
 
   //get data from api

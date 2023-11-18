@@ -23,11 +23,11 @@ class ApplovinService {
     return '05c9b3afbac0bccd';
   }
 
-  static String get nativeAdUnitPostScreen {
-    return 'bb305ebd2dc892d7';
+  static String get nativeAdMediumUnit {
+    return 'ff0dd8d167eb3c3f';
   }
 
-  static String get nativeAdUnitStoryScreen {
-    return '6b17081ae1ad98bc';
+  static String get nativeAdMSmallUnit {
+    return '04cbabee3c1bb348';
   }
 }
