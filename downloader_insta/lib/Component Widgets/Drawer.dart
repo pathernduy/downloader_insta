@@ -52,21 +52,21 @@ Widget drawerForScreen(BuildContext context ){
           title: const Text('Download Stories'),
           onTap: () => Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => DownloadStoryScreen()),
+            MaterialPageRoute(builder: (context) => const DownloadStoryScreen()),
           ),
         ),
         ListTile(
           title: const Text('Download Reel'),
           onTap: () => Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => DownloadReelScreen()),
+            MaterialPageRoute(builder: (context) => const DownloadReelScreen()),
           ),
         ),
         ListTile(
           title: const Text('Download Highlights'),
           onTap: () => Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => DownloadHighlightScreen()),
+            MaterialPageRoute(builder: (context) => const DownloadHighlightScreen()),
           ),
         ),
         //

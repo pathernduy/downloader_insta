@@ -1,14 +1,27 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:downloader_insta/helper_methods/helperMethods.dart';
+import 'package:downloader_insta/rapidapi_service/rapidAPI_story/1000reqPerDay/shahzodomonboyev0_api.dart';
+import 'package:downloader_insta/rapidapi_service/rapidAPI_story/500reqPerMon/social_api1_api.dart';
+import 'package:downloader_insta/rapidapi_service/rapidAPI_story/eqORhigh10reqPerDay/jotucker_api.dart';
+import 'package:downloader_insta/rapidapi_service/rapidapi_keys/my_rapidapi_keys.dart';
 import 'package:get_thumbnail_video/index.dart';
 import 'package:get_thumbnail_video/video_thumbnail.dart';
 import 'package:http/http.dart' as http;
 import 'package:dio/dio.dart';
 
-import '../rapidapi_service/illusion_story_api.dart';
-import '../rapidapi_service/maatootz_story_api.dart';
-import '../rapidapi_service/vahota_api.dart';
-import 'instaApi.dart'; // import http package for API calls
+import '../rapidapi_service/rapidAPI_post/1000reqPerDay/shahzodomonboyev0_api.dart';
+import '../rapidapi_service/rapidAPI_story/10000reqPerMon/sattorlive_api.dart';
+import '../rapidapi_service/rapidAPI_story/100reqPerMon/illusion_story_api.dart';
+import '../rapidapi_service/rapidAPI_story/200reqPerMon/omarmhaimdat_api.dart';
+import '../rapidapi_service/rapidAPI_story/eqORhigh10reqPerDay/vahota_api.dart';
+import '../rapidapi_service/rapidAPI_story/eqORhigh10reqPerDay/yuananf_api.dart';
+import '../rapidapi_service/rapidAPI_story/eqORlow50reqPerMon/capungGGWP_api.dart';
+import '../rapidapi_service/rapidAPI_story/eqORlow50reqPerMon/maatootz_story_api1.dart';
+import '../rapidapi_service/rapidAPI_story/eqORlow50reqPerMon/mrnewton_api2.dart';
+import '../rapidapi_service/rapidAPI_story/eqORlow50reqPerMon/mrngstar_api.dart';
+import '../rapidapi_service/rapidAPI_userInfo/1000reqPerDay/thekirtan_api.dart';
+import 'userInfo.dart'; // import http package for API calls
 
 class InstaStories {
   String? _id, _shortcode, _displayUrl;
@@ -67,52 +80,170 @@ class InstaStories {
 }
 
 Future<List<dynamic>> getStoriesAllData(String storiesUrl) async {
-  //******** code of https://rapidapi.com/arraybobo/api/instagram-media-downloader
-  // const options = {
-  //   method: 'GET',
-  //   url: 'https://instagram-media-downloader.p.rapidapi.com/rapid/allstories.php',
-  //   params: {
-  //     url: '$storiesUrl'
-  //   },
-  //   headers: {
-  //     'X-RapidAPI-Key': '74da2f9e9bmshce8d60192c94677p1551e8jsn6262e9e72c06',
-  //     'X-RapidAPI-Host': 'instagram-media-downloader.p.rapidapi.com'
-  //   }
-  // };
 
-  // https://instagram.com/stories/zyn.oiiiiiiii/3182195549875829278?utm_source=ig_story_item_share&igshid=ODk2MDJkZDc2Zg==
-  // https://instagram.com/stories/duongle.fitness/3182287639284178637?utm_source=ig_story_item_share&igshid=ODk2MDJkZDc2Zg==
-  // https://www.instagram.com/khahgiangg/?__a=1&__d=dis
   List<dynamic> allDataApi = [];
-  bool checkPrivate = false;
   String patternUrl = '';
   String usernameUrl = '';
   int countApiRequest = 0;
-  //checkIsPrivate is in illusion_story_api.dart file
-  checkPrivate = await checkIsPrivate(usernameUrl);
+  var responseUserInfo = null;
+  UserInfo userInfo = new UserInfo();
+  var response = null;
+
   if (storiesUrl.contains('www.')) {
-    patternUrl = storiesUrl.substring(
-      34,
-    );
+    patternUrl = storiesUrl.substring(34, storiesUrl.length);
     usernameUrl = patternUrl.substring(0, patternUrl.indexOf("/"));
-  } else if (storiesUrl.contains('highlights')){
+  } else if (storiesUrl.contains('highlights')) {
     patternUrl = storiesUrl.substring(
       34,
     );
-    usernameUrl = await getUsername(storiesUrl);
+    usernameUrl = await HelperMethods().getUsername(storiesUrl);
+  } else if (storiesUrl.contains('?utm_source')) {
+    String patternstoriesUrl = storiesUrl.substring(34, storiesUrl.length);
+    usernameUrl = patternstoriesUrl.substring(0,patternstoriesUrl.indexOf("/"));
+    usernameUrl = await HelperMethods().getUsername(storiesUrl);
+    //?utm_source
   } else {
-  patternUrl = storiesUrl.substring(
-  30,
-  );
-  usernameUrl = patternUrl.substring(0, patternUrl.indexOf("/"));
+    patternUrl = storiesUrl.substring(34, storiesUrl.length);
+    usernameUrl = patternUrl.substring(0, patternUrl.indexOf("/"));
   }
 
 
-  if (checkPrivate == true) {
-  } else if (countApiRequest == 0) {
-    print('usernameUrl $usernameUrl');
+  try {
+    responseUserInfo = await thekirtanUserInfoApiRequest(usernameUrl);
+  } catch (e) {
+    print(e);
+  }
 
-    final response = await vahotaStoryApiRequest(usernameUrl);
+  if (responseUserInfo != null && responseUserInfo.statusCode == 200) {
+    var data = responseUserInfo.data;
+    var item = data[0];
+    userInfo.id = item['pk'];
+    userInfo.username = item['username'];
+    userInfo.isPrivate = item['is_private'];
+  }
+
+  var res = await Dio().get("https://www.instagram.com/graphql/query/?query_hash=de8017ee0a7c9c45ec4260733d81ea31&variables=%7B%22reel_ids%22%3A%5B"+userInfo.id!+"%5D%2C%22tag_names%22%3A%5B%5D%2C%22location_ids%22%3A%5B%5D%2C%22highlight_reel_ids%22%3A%5B%5D%2C%22precomposed_overlay%22%3Afalse%2C%22show_story_viewer_list%22%3Atrue%2C%22story_viewer_fetch_count%22%3A50%2C%22story_viewer_cursor%22%3A%22%22%7D",
+      options: Options(
+        validateStatus: (_) => true,
+        contentType: Headers.jsonContentType,
+        responseType: ResponseType.json,
+      ));
+  String prefixPattern = res.data.toString();
+  print(res);
+
+  if (userInfo.isPrivate == true) {
+    allDataApi.add(userInfo);
+    return allDataApi;
+  }
+
+  else if (countApiRequest == 0) {
+
+    try {
+      res = await shahzodomonboyev0StoryApiRequest(storiesUrl);
+    } on DioException catch (e) {
+      print(e.response?.statusCode);
+    }
+
+    countApiRequest++;
+
+    if (res.statusCode == 200 && res.data.toString().isNotEmpty) {
+      var data = res.data;
+      var detail = data['detail'];
+      var subdetail = detail['data'];
+      List<dynamic>? items = subdetail['items'];
+
+      for (int i = 0; i < items!.length; i++) {
+        InstaStories instaObject = new InstaStories();
+
+        if (items[i]['urls'][0]['url'].toString().contains('.mp4')) {
+          String urlDownloader = items[i]['urls'][0]['url'];
+          String undecodeUrl = "";
+          if(urlDownloader.contains("%26dl%3D1")){
+            undecodeUrl = urlDownloader.substring(urlDownloader.indexOf("uri=https")+4, urlDownloader.indexOf("%26dl%3D1"));
+          }else{
+            undecodeUrl = urlDownloader.substring(urlDownloader.indexOf("uri=https")+4, urlDownloader.length);
+          }
+          instaObject._displayUrl = "${Uri.decodeComponent(undecodeUrl)}.mp4";
+          instaObject._thumbnail = await VideoThumbnail.thumbnailData(
+            video: instaObject._displayUrl!,
+            imageFormat: ImageFormat.JPEG,
+            maxHeight: 0,
+            // maxWidth: ,
+            // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+            quality: 100,
+          );
+          //"${media_with_thumb[i]['thumbnail'].toString()}.mp4";
+          instaObject._isVideo = true;
+          allDataApi.add(instaObject);
+        } else {
+          String urlDownloader = items[i]['urls'][0]['url'];
+          String undecodeUrl = "";
+          if(urlDownloader.contains("%26dl%3D1")){
+            undecodeUrl = urlDownloader.substring(urlDownloader.indexOf("uri=https")+4, urlDownloader.indexOf("%26dl%3D1"));
+          }else{
+            undecodeUrl = urlDownloader.substring(urlDownloader.indexOf("uri=https")+4, urlDownloader.length);
+          }
+          instaObject._displayUrl = "${Uri.decodeComponent(undecodeUrl)}.jpg";
+          allDataApi.add(instaObject);
+        }
+      }
+    } else {
+      allDataApi.clear();
+    }
+    
+    //sattorliveStoryApiRequest
+    // response = await sattorliveStoryApiRequest(userInfo.username!);
+    // print(response.data);
+    //
+    // if (response.statusCode == 200 && response.data.toString().isNotEmpty) {
+    //   var data = response.data;
+    //   List<dynamic>? medias = data['medias'];
+    //   for (int i = 0; i < medias!.length; i++) {
+    //     InstaStories instaStories = new InstaStories();
+    //
+    //     if (medias![i].toString().contains('mp4')) {
+    //       instaStories.isVideo = true;
+    //       if (medias![i]['url'].toString().contains('&dl=1')) {
+    //         String shortUrl = medias![i]['url']
+    //             .toString()
+    //             .substring(0, medias![i]['url'].toString().length - 5);
+    //         instaStories.displayUrl = shortUrl;
+    //       } else {
+    //         instaStories.displayUrl = medias![i]['url'].toString();
+    //       }
+    //
+    //       //video_versions!.first['url'].toString()
+    //       instaStories._thumbnail = await VideoThumbnail.thumbnailData(
+    //         video: instaStories._displayUrl!,
+    //         imageFormat: ImageFormat.JPEG,
+    //         maxHeight: 0,
+    //         // maxWidth: ,
+    //         // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+    //         quality: 100,
+    //       );
+    //     } else {
+    //       instaStories.isVideo = false;
+    //       if (medias![i]['url'].toString().contains('&dl=1')) {
+    //         String shortUrl = medias![i]['url']
+    //             .toString()
+    //             .substring(0, medias![i]['url'].toString().length - 5);
+    //         instaStories.displayUrl = shortUrl;
+    //       } else {
+    //         instaStories.displayUrl =
+    //             medias![i]['image_versions2']!['candidates'][0]['url'];
+    //       }
+    //     }
+    //     allDataApi.add(instaStories);
+    //   }
+    // } else {
+    //   countApiRequest++;
+    //   allDataApi.clear();
+    // }
+  }
+  else if (countApiRequest == 1) {
+    print('userInfo.username! $userInfo.username!');
+
+    response = await vahotaStoryApiRequest(userInfo.username!);
     print(response.data);
 
     var data = json.decode(response.data);
@@ -148,15 +279,168 @@ Future<List<dynamic>> getStoriesAllData(String storiesUrl) async {
       countApiRequest++;
       allDataApi.clear();
     }
-  } else if (countApiRequest == 1) {
-    print('usernameUrl $usernameUrl');
+  }
+  else if (countApiRequest == 2) {
+    print('userInfo.username! $userInfo.username!');
 
-    final response = await illusionStoryApiRequest(usernameUrl);
+    response = await jotuckerStoryApiRequest(userInfo.username!);
+    print(response.data);
+
+    if (response.statusCode == 200 && response.data.toString().isNotEmpty) {
+      var data = response.data;
+      var reel = data['reel'];
+      List<dynamic>? items = reel['items'];
+      for (int i = 0; i < items!.length; i++) {
+        InstaStories instaStories = new InstaStories();
+
+        if (items![i].toString().contains('video_versions')) {
+          instaStories.isVideo = true;
+          instaStories.displayUrl =
+              "${items![i]['video_versions']![0]['url'].toString()}";
+          //video_versions!.first['url'].toString()
+          instaStories._thumbnail = await VideoThumbnail.thumbnailData(
+            video: instaStories._displayUrl!,
+            imageFormat: ImageFormat.JPEG,
+            maxHeight: 0,
+            // maxWidth: ,
+            // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+            quality: 100,
+          );
+        } else {
+          instaStories.isVideo = false;
+          instaStories.displayUrl =
+              items![i]['image_versions2']!['candidates'][0]['url'];
+        }
+        allDataApi.add(instaStories);
+      }
+    } else {
+      countApiRequest++;
+      allDataApi.clear();
+    }
+  }
+  else if (countApiRequest == 3) {
+    print('userInfo.username! $userInfo.username!');
+
+    response = await yuananfStoryApiRequest(userInfo.username!);
+    print(response.data);
+
+    if (response.statusCode == 200 && response.data.toString().isNotEmpty) {
+      var data = response.data;
+      var reel = data['reel'];
+      List<dynamic>? items = reel['items'];
+      for (int i = 0; i < items!.length; i++) {
+        InstaStories instaStories = new InstaStories();
+
+        if (items![i].toString().contains('video_versions')) {
+          instaStories.isVideo = true;
+          instaStories.displayUrl =
+              "${items![i]['video_versions']![0]['url'].toString()}";
+          //video_versions!.first['url'].toString()
+          instaStories._thumbnail = await VideoThumbnail.thumbnailData(
+            video: instaStories._displayUrl!,
+            imageFormat: ImageFormat.JPEG,
+            maxHeight: 0,
+            // maxWidth: ,
+            // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+            quality: 100,
+          );
+        } else {
+          instaStories.isVideo = false;
+          instaStories.displayUrl =
+              items![i]['image_versions2']!['candidates'][0]['url'];
+        }
+        allDataApi.add(instaStories);
+      }
+    } else {
+      countApiRequest++;
+      allDataApi.clear();
+    }
+  }
+  else if (countApiRequest == 4) {
+    print('userInfo.username! $userInfo.username!');
+
+    response = await socialapiStoryApiRequest(userInfo.username!);
+    print(response.data);
+
+    if (response.statusCode == 200 && response.data.toString().isNotEmpty) {
+      var data = response.data;
+      var reel = data['data'];
+      List<dynamic>? items = reel['items'];
+      for (int i = 0; i < items!.length; i++) {
+        InstaStories instaStories = new InstaStories();
+
+        if (items![i].toString().contains('video_versions')) {
+          instaStories.isVideo = true;
+          instaStories.displayUrl =
+              "${items![i]['video_versions']![0]['url'].toString()}";
+          //video_versions!.first['url'].toString()
+          instaStories._thumbnail = await VideoThumbnail.thumbnailData(
+            video: instaStories._displayUrl!,
+            imageFormat: ImageFormat.JPEG,
+            maxHeight: 0,
+            // maxWidth: ,
+            // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+            quality: 100,
+          );
+        } else {
+          instaStories.isVideo = false;
+          instaStories.displayUrl =
+              items![i]['image_versions2']!['items'][0]['url'];
+        }
+        allDataApi.add(instaStories);
+      }
+    } else {
+      countApiRequest++;
+      allDataApi.clear();
+    }
+  }
+  else if (countApiRequest == 5) {
+    print('userInfo.username! $userInfo.username!');
+
+    response = await omarmhaimdatStoryApiRequest(userInfo.id!);
+    print(response.data);
+
+    if (response.statusCode == 200 && response.data.toString().isNotEmpty) {
+      var data = response.data;
+      var reels_media = data['reels_media'];
+      List<dynamic>? items = reels_media[0]['items'];
+      for (int i = 0; i < items!.length; i++) {
+        InstaStories instaStories = new InstaStories();
+
+        if (items![i].toString().contains('video_versions')) {
+          instaStories.isVideo = true;
+          instaStories.displayUrl =
+              "${items![i]['video_versions']![0]['url'].toString()}";
+          //video_versions!.first['url'].toString()
+          instaStories._thumbnail = await VideoThumbnail.thumbnailData(
+            video: instaStories._displayUrl!,
+            imageFormat: ImageFormat.JPEG,
+            maxHeight: 0,
+            // maxWidth: ,
+            // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+            quality: 100,
+          );
+        } else {
+          instaStories.isVideo = false;
+          instaStories.displayUrl =
+              items![i]['image_versions2']!['candidates'][0]['url'];
+        }
+        allDataApi.add(instaStories);
+      }
+    } else {
+      countApiRequest++;
+      allDataApi.clear();
+    }
+  }
+  else if (countApiRequest == 6) {
+    print('userInfo.username! $userInfo.username!');
+
+    response = await illusionStoryApiRequest(userInfo.username!);
     print(response.data);
 
     var data = json.decode(response.data);
     if (response.statusCode == 200 && response.data.toString().isNotEmpty) {
-      for (int i = 0; i < data.length; i++) {
+      for (int i = 0; i < data.length;) {
         InstaStories instaStories = new InstaStories();
         if (data[i].toString().contains(".mp4")) {
           instaStories.isVideo = true;
@@ -169,12 +453,11 @@ Future<List<dynamic>> getStoriesAllData(String storiesUrl) async {
             // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
             quality: 100,
           );
-        } else if (data[i].toString().contains(".jpg") ||
-            data[i].toString().contains(".png") &&
-                (data[i + 1].toString().contains(".mp4"))) {
+          i += 2;
         } else {
           instaStories.isVideo = false;
           instaStories.displayUrl = data[i].toString();
+          i++;
         }
         allDataApi.add(instaStories);
       }
@@ -182,10 +465,117 @@ Future<List<dynamic>> getStoriesAllData(String storiesUrl) async {
       countApiRequest++;
       allDataApi.clear();
     }
-  } else if (countApiRequest == 2) {
-    print('usernameUrl $usernameUrl');
+  }
+  else if (countApiRequest == 7) {
+    print('userInfo.username! $userInfo.username!');
 
-    final response = await maatootzStoryApiRequest(usernameUrl);
+    response = await capungGGWPStoryApiRequest(userInfo.username!);
+    print(response.data);
+
+    if (response.statusCode == 200 && response.data.toString().isNotEmpty) {
+      var data = response.data;
+      List<dynamic>? items = data['story'];
+      for (int i = 0; i < items!.length; i++) {
+        InstaStories instaStories = new InstaStories();
+
+        if (items![i].toString().contains('video_src')) {
+          instaStories.isVideo = true;
+          instaStories.displayUrl = "${items![i]['video_src']!.toString()}";
+          //video_versions!.first['url'].toString()
+          instaStories._thumbnail = await VideoThumbnail.thumbnailData(
+            video: instaStories._displayUrl!,
+            imageFormat: ImageFormat.JPEG,
+            maxHeight: 0,
+            // maxWidth: ,
+            // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+            quality: 100,
+          );
+        } else {
+          instaStories.isVideo = false;
+          instaStories.displayUrl = items![i]['static_image']!;
+        }
+        allDataApi.add(instaStories);
+      }
+    } else {
+      countApiRequest++;
+      allDataApi.clear();
+    }
+  }
+  else if (countApiRequest == 8) {
+    print('userInfo.username! $userInfo.username!');
+
+    response = await mrngstarStoryApiRequest(userInfo.username!);
+    print(response.data);
+
+    if (response.statusCode == 200 && response.data.toString().isNotEmpty) {
+      var data = response.data;
+      var item = data['data'];
+      List<dynamic>? stories = item['stories'];
+      for (int i = 0; i < stories!.length; i++) {
+        InstaStories instaStories = new InstaStories();
+
+        if (stories![i].toString().contains('video_versions')) {
+          instaStories.isVideo = true;
+          instaStories.displayUrl = stories![i]['video_versions']![0]['url'].toString();
+          //video_versions!.first['url'].toString()
+          instaStories._thumbnail = await VideoThumbnail.thumbnailData(
+            video: instaStories._displayUrl!,
+            imageFormat: ImageFormat.JPEG,
+            maxHeight: 0,
+            // maxWidth: ,
+            // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+            quality: 100,
+          );
+        } else {
+          instaStories.isVideo = false;
+          instaStories.displayUrl = stories![i]['image_versions2']!['candidates'][0]['url'];
+        }
+        allDataApi.add(instaStories);
+      }
+    } else {
+      countApiRequest++;
+      allDataApi.clear();
+    }
+  }
+  else if (countApiRequest == 9) {
+    print('userInfo.username! $userInfo.username!');
+
+    response = await mrnewton2StoryApiRequest(userInfo.username!);
+    print(response.data);
+
+    if (response.statusCode == 200 && response.data.toString().isNotEmpty) {
+      var data = response.data;
+      List<dynamic>? stories = data['stories'];
+      for (int i = 0; i < stories!.length; i++) {
+        InstaStories instaStories = new InstaStories();
+
+        if (stories![i]['Type'].toString().contains('Story-Video')) {
+          instaStories.isVideo = true;
+          instaStories.displayUrl = stories![i]['media'].toString();
+          //video_versions!.first['url'].toString()
+          instaStories._thumbnail = await VideoThumbnail.thumbnailData(
+            video: instaStories._displayUrl!,
+            imageFormat: ImageFormat.JPEG,
+            maxHeight: 0,
+            // maxWidth: ,
+            // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+            quality: 100,
+          );
+        } else {
+          instaStories.isVideo = false;
+          instaStories.displayUrl = stories![i]['media'].toString();
+        }
+        allDataApi.add(instaStories);
+      }
+    } else {
+      countApiRequest++;
+      allDataApi.clear();
+    }
+  }
+  else if (countApiRequest == 10) {
+    print('userInfo.username! $userInfo.username!');
+
+    response = await maatootz1StoryApiRequest(userInfo.username!);
     print(response.data);
 
     var data = json.decode(response.data);
@@ -220,60 +610,3 @@ Future<List<dynamic>> getStoriesAllData(String storiesUrl) async {
 
   return allDataApi;
 }
-
-
-//start mutual methods
-Future<bool> checkIsPrivate(String username) async{
-
-
-  final response = await Dio().get(
-      'https://www.instagram.com/'+username+'/?__a=1&__d=dis');
-
-  var data = json.decode(response.data);
-  Map items = data['graphql'];
-  Map user = items['user'];
-  bool is_private = user['is_private'];
-  return is_private;
-}
-//"message" -> "Please wait a few minutes before you try again."
-
-Future<String> getUsername(String url) async {
-  final urlRequest = Uri.parse(url + '/?__a=1&__d=dis');
-
-  // final response = await http.get(
-  //   url,
-  // );
-
-  final response = await Dio().get(
-    url,
-  );
-  String username = '';
-
-  var data = json.decode(response.data);
-  if (data
-      .toString()
-      .contains("Please wait a few minutes before you try again.")) {
-    return username;
-  } else {
-    username = data['user']['username'].toString();
-    return username;
-  }
-}
-/*
-* json for highlight get request api after add /?__a=1&__d=dis
-* {
-	"user": {
-		"id": "1152500318",
-		"profile_pic_url": "https://instagram.fsgn2-9.fna.fbcdn.net/v/t51.2885-19/398839605_2043866312639963_3562212760234049305_n.jpg?stp=dst-jpg_s150x150&_nc_ht=instagram.fsgn2-9.fna.fbcdn.net&_nc_cat=111&_nc_ohc=WM7HAkYTj4kAX_uO56W&edm=AKGtDmEBAAAA&ccb=7-5&oh=00_AfDz1abFLzXXaVnZGTi49dVH9-Yl7KlXyiD8fVwZBZq6wg&oe=655756A2&_nc_sid=2078dd",
-		"username": "duongle.fitness"
-	},
-	"highlight": {
-		"id": 18045959020472376,
-		"title": "Mục đít chính"
-	},
-	"showQRModal": false
-}
-* */
-
-
-//end mutual methods

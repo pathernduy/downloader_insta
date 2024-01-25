@@ -43,9 +43,9 @@
       <excludeFolder url="file://$MODULE_DIR$/downloader_insta/linux/flutter/ephemeral/.plugin_symlinks/package_info_plus_linux/.pub" />
       <excludeFolder url="file://$MODULE_DIR$/downloader_insta/linux/flutter/ephemeral/.plugin_symlinks/package_info_plus_linux/.dart_tool" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="Android API 30 Platform" jdkType="Android SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Dart SDK" level="project" />
+    <orderEntry type="library" exported="" name="Dart SDK" level="project" />
     <orderEntry type="library" name="Dart Packages" level="project" />
   </component>
 </module>

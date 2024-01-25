@@ -2,22 +2,40 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
-import 'package:downloader_insta/rapidapi_service/uzapishop_api.dart';
+import 'package:downloader_insta/error&exception/errorException.dart';
+import 'package:downloader_insta/model/userInfo.dart';
 import 'package:get_thumbnail_video/index.dart';
 import 'package:get_thumbnail_video/video_thumbnail.dart';
-import 'package:http/http.dart' as http;
-import 'package:extended_image/extended_image.dart';
-import 'package:path_provider/path_provider.dart';
 
-import '../rapidapi_service/SAIDAHROR_api.dart';
-import '../rapidapi_service/maatootz_post_api.dart';
-import '../rapidapi_service/mrngstar_api.dart'; // import http package for API calls
+import '../rapidapi_service/rapidAPI_post/1000reqPerDay/shahzodomonboyev0_api.dart';
+import '../rapidapi_service/rapidAPI_post/100reqPerMon/illusion_api.dart';
+import '../rapidapi_service/rapidAPI_post/100reqPerMon/maxcukerbergs007_api.dart';
+import '../rapidapi_service/rapidAPI_post/100reqPerMon/mohammadtahapourabbas_api.dart';
+import '../rapidapi_service/rapidAPI_post/100reqPerMon/mrnewton_api1.dart';
+import '../rapidapi_service/rapidAPI_post/100reqPerMon/neotank_api.dart';
+import '../rapidapi_service/rapidAPI_post/10reqPerDay/jotucker_api.dart';
+import '../rapidapi_service/rapidAPI_post/10reqPerDay/matabt_api.dart';
+import '../rapidapi_service/rapidAPI_post/10reqPerDay/yuananf_api.dart';
+import '../rapidapi_service/rapidAPI_post/150reqPerMon/thekirtan_api.dart';
+import '../rapidapi_service/rapidAPI_post/200reqPerMon/omarmhaimdat_api.dart';
+import '../rapidapi_service/rapidAPI_post/250reqPerMon/nikansara_api.dart';
+import '../rapidapi_service/rapidAPI_post/500reqPerMon/netogamikk_api.dart';
+import '../rapidapi_service/rapidAPI_post/500reqPerMon/social_api1_api.dart';
+import '../rapidapi_service/rapidAPI_post/50reqPerMon/JustMobi_api.dart';
+import '../rapidapi_service/rapidAPI_post/50reqPerMon/capungGGWP_api.dart';
+import '../rapidapi_service/rapidAPI_post/50reqPerMon/glavier_api.dart';
+import '../rapidapi_service/rapidAPI_post/50reqPerMon/instagapicom_api.dart';
+import '../rapidapi_service/rapidAPI_post/50reqPerMon/maatootz_post_api.dart';
+import '../rapidapi_service/rapidAPI_post/50reqPerMon/mrngstar_api.dart';
+import '../rapidapi_service/rapidAPI_userInfo/1000reqPerDay/thekirtan_api.dart';
+
+// import http package for API calls
 
 class InstaPost {
   String? _id, _shortcode, _displayUrl, _errorString;
-  bool _isVideo = false,
-      _listDisplay = false;
+  bool _isVideo = false, _listDisplay = false, _isPrivate = false;
   Uint8List? _thumbnail;
+
   // List of images from user feed
 
   List<dynamic>? _listFeedImagesUrl = [];
@@ -36,6 +54,8 @@ class InstaPost {
 
   bool get listDisplay => _listDisplay;
 
+  bool get isPrivate => _isPrivate;
+
   List<dynamic>? get listFeedImagesUrl => _listFeedImagesUrl;
 }
 
@@ -49,6 +69,10 @@ Future<List<dynamic>> getPostAllData(String postUrl) async {
   httpClient.userAgent;
   String url = '';
   int countCallRapidRequest = 0;
+  String paramShortcode = '';
+
+  var responseUserInfo = null;
+  UserInfo userInfo = new UserInfo();
   // var responce = await dio.get(url,
   //   options: Options(
   //       headers: headers
@@ -58,162 +82,76 @@ Future<List<dynamic>> getPostAllData(String postUrl) async {
   // }
 
   if (postUrl.contains("?igshid")) {
-    url = postUrl.substring(0, postUrl.indexOf("?igshid") );
-  } else if (postUrl.contains("?img_index")) {
-    url = postUrl.substring(0, postUrl.indexOf("?img_index") );
+    url = postUrl.substring(0, postUrl.indexOf("?igshid"));
+    paramShortcode = url.substring(28, url.length - 1);
+  } else if (postUrl.contains("?img_index") ) {
+    url = postUrl.substring(0, postUrl.indexOf("?igsh"));
+    paramShortcode = url.substring(28, url.length - 1);
+  } else if (postUrl.contains("?igsh") ) {
+    url = postUrl.substring(0, postUrl.indexOf("?igsh"));
+
   } else {
-    url = postUrl.substring(0, postUrl.lastIndexOf("/") );
+    url = postUrl;
   }
   /*Response ({"message":"Please wait a few minutes before you try again.","require_login":true,"status":"fail"})*/
 
-  var res = await Dio().get("$url?__a=1&__d=dis",options: Options (
-    validateStatus: (_) => true,
-    contentType: Headers.jsonContentType,
-    responseType:ResponseType.json,
-  ));
+  var res = await Dio().get("$url?__a=1&__d=dis",
+      options: Options(
+        validateStatus: (_) => true,
+        contentType: Headers.jsonContentType,
+        responseType: ResponseType.json,
+      ));
   String prefixPattern = res.data.toString();
-  // try{
-  //   var res1 = await dio.get(
-  //       "$url/?__a=1&__d=dis"); // adding /?__a=1&__d=dis at the end will return json data
-  //   String prefixPattern1 = res1.data.toString();
-  // }on DioException catch (e) {
-  //   // The request was made and the server responded with a status code
-  //   // that falls out of the range of 2xx and is also not 304.
-  //   if (e.response != null) {
-  //     print(e.response!.data);
-  //     print(e.response!.headers);
-  //     print(e.response!.requestOptions);
-  //   } else {
-  //     // Something happened in setting up or sending the request that triggered an Error
-  //     print(e.requestOptions);
-  //     print(e.message);
-  //   }
-  // }
 
+  paramShortcode = url.substring(28, url.length - 1);
 
-  // xài while sau này
-  while (allDataApi.isEmpty)
-  // (res.statusCode != 200 || (res.statusCode == 200 && res.data.isEmpty ))
-      {
-    if (prefixPattern.contains("{message: Please wait a few minutes before you try again., require_login: true, status: fail}") && countCallRapidRequest == 1 || prefixPattern.contains("<!DOCTYPE html>")) {
+  try {
+    responseUserInfo = await thekirtanUserInfoApiRequest(url);
+  } catch (e) {
+    print(e);
+  }
 
-      res = await uzapishopPostApiRequest(url);
-      countCallRapidRequest++;
-      // 0:"https://scontent.cdninstagram.com/v/t50.2886-16/377490711_175043198947964_587192338833431908_n.mp4?_nc_ht=scontent.cdninstagram.com&_nc_cat=108&_nc_ohc=DckoV_ndMEAAX8dR7sx&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfDsRRXV2Khk1MT3-8ldEIx5-5Dyr_Wah5GxswM1IpXuzg&oe=65153617&_nc_sid=10d13b"
-      // 1:"https://scontent.cdninstagram.com/v/t50.2886-16/376841088_1520790485394605_2697396614198064867_n.mp4?_nc_ht=scontent.cdninstagram.com&_nc_cat=105&_nc_ohc=27Vf9tOjvNIAX_7cNuf&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfB3SyzAvESj_0blyzV8AIexpPd4bBthOea020uEOLO8Fg&oe=6515762E&_nc_sid=10d13b"
-      // 2:"https://scontent.cdninstagram.com/v/t51.2885-15/376857140_1500057897410362_997120354491921715_n.jpg?stp=dst-jpg_e35_p1080x1080&_nc_ht=scontent.cdninstagram.com&_nc_cat=110&_nc_ohc=3A8ipUGwMKwAX8hBIA4&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfDEFmh8XZHdB3Qkieu1_FQZqR0QKWQYlW9rQbNview5QQ&oe=65197D5B&_nc_sid=10d13b"
+  if (responseUserInfo != null && responseUserInfo.statusCode == 200) {
+    var data = responseUserInfo.data;
+    var item = data[0];
+    userInfo.id = item['pk'];
+    userInfo.username = item['username'];
+    userInfo.isPrivate = item['is_private'];
+  }
 
-      // 0:"https://snapxcdn.com/v2/?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJodHRwczovL3Njb250ZW50LmNkbmluc3RhZ3JhbS5jb20vdi90NTAuMjg4Ni0xNi8zNzc0OTA3MTFfMTc1MDQzMTk4OTQ3OTY0XzU4NzE5MjMzODgzMzQzMTkwOF9uLm1wND9fbmNfaHQ9c2NvbnRlbnQuY2RuaW5zdGFncmFtLmNvbSZfbmNfY2F0PTEwOCZfbmNfb2hjPThFdC1ZTkN2T1FvQVg5RFJFal8mZWRtPUFQczE3Q1VCQUFBQSZjY2I9Ny01Jm9oPTAwX0FmRGhvUUt6aklZaEJ0N01zU3lpNDc2bkdnNWwxbjVXR2YtWWpEamJUWTFkd2cmb2U9NjUxQzc2NTcmX25jX3NpZD0xMGQxM2IiLCJmaWxlbmFtZSI6IlNuYXBzYXZlLmFwcF8zNzc0OTA3MTFfMTc1MDQzMTk4OTQ3OTY0XzU4NzE5MjMzODgzMzQzMTkwOF9uLm1wNCJ9.Hp1xXClha2KiA7fgKHaQ_oAsFtHrUK6fD_LxGp10V_4&dl=1\\"
-      // 1:"https://snapxcdn.com/v2/?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJodHRwczovL3Njb250ZW50LmNkbmluc3RhZ3JhbS5jb20vdi90NTAuMjg4Ni0xNi8zNzY4NDEwODhfMTUyMDc5MDQ4NTM5NDYwNV8yNjk3Mzk2NjE0MTk4MDY0ODY3X24ubXA0P19uY19odD1zY29udGVudC5jZG5pbnN0YWdyYW0uY29tJl9uY19jYXQ9MTA1Jl9uY19vaGM9ZWFFeUlBUlVxMjhBWF9EaUhYUCZlZG09QVBzMTdDVUJBQUFBJmNjYj03LTUmb2g9MDBfQWZDR0NHWHV3bUthWkF3YW9BcEpGZnNxWTlkOHE4eTBMQ21MSF9SRFFZbWhyUSZvZT02NTFDQjY2RSZfbmNfc2lkPTEwZDEzYiIsImZpbGVuYW1lIjoiU25hcHNhdmUuYXBwXzM3Njg0MTA4OF8xNTIwNzkwNDg1Mzk0NjA1XzI2OTczOTY2MTQxOTgwNjQ4Njdfbi5tcDQifQ.rO1-Wo5zMwlfvTpPJopNyuiRS84pVHhsCOyTfEF3Qe8&dl=1\\"
-      // 2:"https://scontent.cdninstagram.com/v/t51.2885-15/376857140_1500057897410362_997120354491921715_n.jpg?stp=dst-jpg_e35_p1080x1080&_nc_ht=scontent.cdninstagram.com&_nc_cat=110&_nc_ohc=3A8ipUGwMKwAX8hBIA4&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfDEFmh8XZHdB3Qkieu1_FQZqR0QKWQYlW9rQbNview5QQ&oe=65197D5B&_nc_sid=10d13b"
-      
-      if (res.statusCode == 200 && res.data.toString().isNotEmpty && res.data != null) {
-        var data = res.data;
-        if(data.toString().contains("instagrap.app") || data.toString().contains("http://88.198.25.15:8088")){
+  if (userInfo.isPrivate == true) {
+    allDataApi.add(userInfo);
+    return allDataApi;
+  }
+  else{
+    while (allDataApi.isEmpty)
+      // (res.statusCode != 200 || (res.statusCode == 200 && res.data.isEmpty ))
+        {
+      if (errorException().checkException(prefixPattern) &&
+          countCallRapidRequest == 1 ||
+          prefixPattern.contains("<!DOCTYPE html>")) {
+        try {
+          res = await shahzodomonboyev0PostApiRequest(url);
+        } on DioException catch (e) {
+          print(e.response?.statusCode);
+        }
 
-          allDataApi.clear();
-        }else{
-          for (int i = 0; i < data.length; i++) {
+        countCallRapidRequest++;
+
+        if (errorException().checkException(res.toString()) &&
+            res != null &&
+            res.statusCode == 200) {
+          var data = res.data;
+          var detail = data['detail'];
+          List<dynamic>? items = detail['items'];
+
+          for (int i = 0; i < items!.length; i++) {
             InstaPost instaObject = new InstaPost();
-            if (data[i].toString().contains("scontent.cdninstagram.com")) {
-              if (data[i].toString().contains(".mp4")) {
-                instaObject._displayUrl = "${data[i].toString()}.mp4";
-                instaObject._thumbnail = await VideoThumbnail.thumbnailData(
-                  video: instaObject._displayUrl!,
-                  imageFormat: ImageFormat.JPEG,
-                  maxHeight: 0,
-                  // maxWidth: ,
-                  // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
-                  quality: 100,
-                );
-                instaObject._isVideo = true;
-                allDataApi.add(instaObject);
-              } else {
-                instaObject._displayUrl = "${data[i].toString()}.jpg";
-                allDataApi.add(instaObject);
-              }
 
-            } else if (data[i].toString().contains("snapxcdn.com")) {
-              instaObject._displayUrl = "${data[i].toString()}.mp4";
-              instaObject._thumbnail = await VideoThumbnail.thumbnailData(
-                video: instaObject._displayUrl!,
-                imageFormat: ImageFormat.JPEG,
-                maxHeight: 0,
-                // maxWidth: ,
-                // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
-                quality: 100,
-              );
-              instaObject._isVideo = true;
-              allDataApi.add(instaObject);
-            }
-            // else if (data[i].toString().contains("instagrap.app") || data[i].toString().contains("http://88.198.25.15:8088")) {
-            //   // res = await saidahrorPostApiRequest(url);
-            //   countCallRapidRequest++;
-            //   allDataApi.clear();
-            // }
-            else{
-              print("\n"+data[i].toString());
-              allDataApi.clear();
-            }
-        }
-
-
-        }
-      } else {
-        allDataApi.clear();
-      }
-
-    }
-    else if (prefixPattern.contains("{message: Please wait a few minutes before you try again., require_login: true, status: fail}") &&  countCallRapidRequest == 2){
-      //saidahror api post
-      res = await saidahrorPostApiRequest(url);
-      countCallRapidRequest++;
-      
-      if (res.statusCode == 200 && res.data.toString().isNotEmpty && res.data != null && res.data != null) {
-        var data = res.data;
-        List<dynamic>? mediaList = data['media'];
-        for (int i = 0; i < mediaList!.length; i++) {
-          InstaPost instaObject = new InstaPost();
-
-          if (mediaList[i]['type'].toString().contains('video')) {
-            if(mediaList[i]['url'].toString().contains('&dl=1')){
-              instaObject._displayUrl = "${mediaList[i]['url'].toString().substring(0,mediaList[i]['url'].toString().length-5)}.mp4";
-            }else{
-              instaObject._displayUrl = "${mediaList[i]['url'].toString()}.mp4";
-            }
-            instaObject._thumbnail = await VideoThumbnail.thumbnailData(
-              video: instaObject._displayUrl!,
-              imageFormat: ImageFormat.JPEG,
-              maxHeight: 0,
-              // maxWidth: ,
-              // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
-              quality: 100,
-            );
-            allDataApi.add(instaObject);
-            instaObject._isVideo = true;
-          } else {
-            instaObject._displayUrl = "${mediaList[i]['media'].toString()}.jpg";
-            allDataApi.add(instaObject);
-          }
-        }
-      } else {
-
-        allDataApi.clear();
-      }
-    }
-    else if (prefixPattern.contains("{message: Please wait a few minutes before you try again., require_login: true, status: fail}") &&  countCallRapidRequest == 3){
-      //maatootz api post
-      res = await maatootzPostApiRequest(url);
-      countCallRapidRequest++;
-      
-      if (res.statusCode == 200 && res.data.toString().isNotEmpty && res.data != null) {
-        var data = res.data;
-        List<dynamic>? media_with_thumb = data['media_with_thumb'];
-        for (int i = 0; i < media_with_thumb!.length; i++) {
-          InstaPost instaObject = new InstaPost();
-
-            if (media_with_thumb[i]['Type'].toString().contains('Video')) {
-              instaObject._displayUrl = "${media_with_thumb[i]['media'].toString()}.mp4";
+            if (items[i]['urls'][0]['extension'].toString().contains('mp4')) {
+              String urlDownloader = items[i]['urls'][0]['url'];
+              String undecodeUrl = urlDownloader.substring(urlDownloader.indexOf("uri=https")+4, urlDownloader.indexOf("%26dl%3D1"));
+              instaObject._displayUrl = "${Uri.decodeComponent(undecodeUrl)}.mp4";
               instaObject._thumbnail = await VideoThumbnail.thumbnailData(
                 video: instaObject._displayUrl!,
                 imageFormat: ImageFormat.JPEG,
@@ -226,100 +164,80 @@ Future<List<dynamic>> getPostAllData(String postUrl) async {
               instaObject._isVideo = true;
               allDataApi.add(instaObject);
             } else {
-              instaObject._displayUrl = "${media_with_thumb[i]['media'].toString()}.jpg";
+              String urlDownloader = items[i]['urls'][0]['url'];
+              String undecodeUrl = urlDownloader.substring(urlDownloader.indexOf("uri=https")+4, urlDownloader.indexOf("%26dl%3D1"));
+              instaObject._displayUrl = "${Uri.decodeComponent(undecodeUrl)}.jpg";
               allDataApi.add(instaObject);
             }
-        }
-      } else {
-
-        allDataApi.clear();
-      }
-    }
-    else if (prefixPattern.contains("{message: Please wait a few minutes before you try again., require_login: true, status: fail}") &&  countCallRapidRequest == 4){
-      //mrngstar api post
-      res = await mrngstarPostApiRequest(url);
-      countCallRapidRequest++;
-      
-      if (res.statusCode == 200 && res.data.toString().isNotEmpty && res.data != null) {
-        var data = res.data;
-        List<dynamic>? media_with_thumb = data['media_with_thumb'];
-        for (int i = 0; i < media_with_thumb!.length; i++) {
-          InstaPost instaObject = new InstaPost();
-
-          if (media_with_thumb[i]['Type'].toString().contains('Video')) {
-            instaObject._displayUrl = "${media_with_thumb[i]['media'].toString()}.mp4";
-            instaObject._thumbnail = await VideoThumbnail.thumbnailData(
-              video: instaObject._displayUrl!,
-              imageFormat: ImageFormat.JPEG,
-              maxHeight: 0,
-              // maxWidth: ,
-              // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
-              quality: 100,
-            );
-            //"${media_with_thumb[i]['thumbnail'].toString()}.mp4";
-            instaObject._isVideo = true;
-            allDataApi.add(instaObject);
-          } else {
-            instaObject._displayUrl = "${media_with_thumb[i]['media'].toString()}.jpg";
-            allDataApi.add(instaObject);
           }
+        } else {
+          allDataApi.clear();
         }
-      } else {
 
-        allDataApi.clear();
-      }
-    }
-    else if (prefixPattern.contains("{message: Please wait a few minutes before you try again., require_login: true, status: fail}") &&  countCallRapidRequest == 5){
-      //mrngstar api post
-      res = await maatootzPostApiRequest(url);
-      countCallRapidRequest++;
-      
-      if (res.statusCode == 200 && res.data.toString().isNotEmpty && res.data != null) {
-        var data = res.data;
-        List<dynamic>? media_with_thumb = data['media_with_thumb'];
-        for (int i = 0; i < media_with_thumb!.length; i++) {
-          InstaPost instaObject = new InstaPost();
 
-          if (media_with_thumb[i]['Type'].toString().contains('Video')) {
-            instaObject._displayUrl = "${media_with_thumb[i]['media'].toString()}.mp4";
-            instaObject._thumbnail = await VideoThumbnail.thumbnailData(
-              video: instaObject._displayUrl!,
-              imageFormat: ImageFormat.JPEG,
-              maxHeight: 0,
-              // maxWidth: ,
-              // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
-              quality: 100,
-            );
-            //"${media_with_thumb[i]['thumbnail'].toString()}.mp4";
-            instaObject._isVideo = true;
-            allDataApi.add(instaObject);
-          } else {
-            instaObject._displayUrl = "${media_with_thumb[i]['media'].toString()}.jpg";
-            allDataApi.add(instaObject);
-          }
-        }
-      } else {
-        allDataApi.clear();
-      }
-    }
-    else if (prefixPattern.contains('graphql') ) {
-      var data = res.data;
-      print("data receiver: $data");
-      Map items = data['graphql'];
 
-      Map shortcodeMedia = items['shortcode_media'];
+        //add these codes below the ones above
+        // try {
+        //   res = await jotuckerPostApiRequest(paramShortcode);
+        // } on DioException catch (e) {
+        //   print(e.response?.statusCode);
+        // }
+        //
+        // countCallRapidRequest++;
+        //
+        // if (errorException().checkException(res.toString()) &&
+        //     res != null &&
+        //     res.statusCode == 200) {
+        //   var data = res.data;
+        //   var items = data['items'][0];
+        //   List<dynamic>? carousel_media = items['carousel_media'];
+        //
+        //   for (int i = 0; i < carousel_media!.length; i++) {
+        //     InstaPost instaObject = new InstaPost();
+        //
+        //     if (carousel_media[i].toString().contains('video_versions')) {
+        //       instaObject._displayUrl =
+        //           "${carousel_media[i]['video_versions'][0]['url'].toString()}.mp4";
+        //       instaObject._thumbnail = await VideoThumbnail.thumbnailData(
+        //         video: instaObject._displayUrl!,
+        //         imageFormat: ImageFormat.JPEG,
+        //         maxHeight: 0,
+        //         // maxWidth: ,
+        //         // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+        //         quality: 100,
+        //       );
+        //       //"${media_with_thumb[i]['thumbnail'].toString()}.mp4";
+        //       instaObject._isVideo = true;
+        //       allDataApi.add(instaObject);
+        //     } else {
+        //       instaObject._displayUrl =
+        //           "${carousel_media[i]['image_versions2']['candidates'][0]['url'].toString()}.jpg";
+        //       allDataApi.add(instaObject);
+        //     }
+        //   }
+        // } else {
+        //   allDataApi.clear();
+        // }
 
-      if (shortcodeMedia.containsKey('edge_sidecar_to_children')) {
-        List<dynamic>? _listPost =
-        shortcodeMedia['edge_sidecar_to_children']['edges'];
+      } else if (errorException().checkException(prefixPattern) &&
+          countCallRapidRequest == 2) {
+        //mrngstar api post 50req/month
+        res = await mrngstarPostApiRequest(paramShortcode);
+        countCallRapidRequest++;
 
-        if (_listPost!.isNotEmpty)
-          for (var i in _listPost) {
+        if (res.statusCode == 200 &&
+            res.data.toString().isNotEmpty &&
+            res.data != null) {
+          var data = res.data;
+          var item = data['data'];
+          var edge_sidecar_to_children = item['edge_sidecar_to_children'];
+          List<dynamic>? listNode = edge_sidecar_to_children['edges'];
+          for (int i = 0; i < listNode!.length; i++) {
             InstaPost instaObject = new InstaPost();
-            if (i['node']['is_video'] == true) {
-              instaObject._id = i['node']['id'];
-              instaObject._shortcode = i['node']['shortcode'];
-              instaObject._displayUrl = "${i['node']['video_url']}.mp4";
+
+            if (listNode[i]['node'].toString().contains('video_url')) {
+              instaObject._displayUrl =
+              "${listNode[i]['node']['video_url'].toString()}.mp4";
               instaObject._thumbnail = await VideoThumbnail.thumbnailData(
                 video: instaObject._displayUrl!,
                 imageFormat: ImageFormat.JPEG,
@@ -328,295 +246,847 @@ Future<List<dynamic>> getPostAllData(String postUrl) async {
                 // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
                 quality: 100,
               );
-              instaObject._isVideo = i['node']['is_video'];
+              //"${media_with_thumb[i]['thumbnail'].toString()}.mp4";
+              instaObject._isVideo = true;
+              allDataApi.add(instaObject);
             } else {
-              instaObject._id = i['node']['id'];
-              instaObject._shortcode = i['node']['shortcode'];
-              instaObject._displayUrl = i['node']['display_url'];
+              instaObject._displayUrl =
+              "${listNode[i]['node']['display_url'].toString()}.jpg";
+              allDataApi.add(instaObject);
             }
-            allDataApi.add(instaObject);
-          }
-      } else {
-        InstaPost instaObject = new InstaPost();
-        if (shortcodeMedia['is_video'] == true) {
-          if (shortcodeMedia['display_url'] != null) {
-            instaObject._id = shortcodeMedia['id'];
-            instaObject._shortcode = shortcodeMedia['shortcode'];
-            instaObject._displayUrl = "${shortcodeMedia['video_url']}.mp4";
-            instaObject._thumbnail = await VideoThumbnail.thumbnailData(
-              video: instaObject._displayUrl!,
-              imageFormat: ImageFormat.JPEG,
-              maxHeight: 0,
-              // maxWidth: ,
-              // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
-              quality: 100,
-            );
-            instaObject._isVideo = shortcodeMedia['is_video'];
-          } else {
-            instaObject._id = shortcodeMedia['id'];
-            instaObject._shortcode = shortcodeMedia['shortcode'];
-            instaObject._displayUrl = "${shortcodeMedia['video_url']}.mp4";
-            instaObject._thumbnail = await VideoThumbnail.thumbnailData(
-              video: instaObject._displayUrl!,
-              imageFormat: ImageFormat.JPEG,
-              maxHeight: 0,
-              // maxWidth: ,
-              // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
-              quality: 100,
-            );
-            instaObject._isVideo = shortcodeMedia['is_video'];
           }
         } else {
-          if (shortcodeMedia['image_versions2'] == null) {
-            instaObject._id = shortcodeMedia['id'];
-            instaObject._shortcode = shortcodeMedia['shortcode'];
-            instaObject._displayUrl = shortcodeMedia['display_url'];
-          } else {
-            instaObject._id = shortcodeMedia['id'];
-            instaObject._shortcode = shortcodeMedia['pk'];
-            instaObject._displayUrl =
-            shortcodeMedia['image_versions2']['candidates'][0]['url'];
-          }
+          allDataApi.clear();
         }
+      } else if (errorException().checkException(prefixPattern) &&
+          countCallRapidRequest == 3) {
+        res = await matabtPostApiRequest(url);
+        countCallRapidRequest++;
 
-        allDataApi.add(instaObject);
-      }
-    }
-    else if (prefixPattern.contains('items') ) {
-      // var data = res.data;
-      var data = res.data;
-      print("data receiver: $data");
-      // Map items = data['graphql'];
+        if (errorException().checkException(res.toString()) &&
+            res != null &&
+            res.statusCode == 200) {
+          var data = res.data;
+          var items = data[0];
+          List<dynamic>? carousel_media = items['carousel_media'];
 
-      var items = data['items'][0];
-
-      if (items.containsKey('carousel_media')) {
-        List<dynamic>? _listPost = items['carousel_media'];
-
-        if (_listPost!.isNotEmpty)
-          for (var i in _listPost) {
+          for (int i = 0; i < carousel_media!.length; i++) {
             InstaPost instaObject = new InstaPost();
-            instaObject._id = i['id'];
-            instaObject._shortcode = i['pk'];
-            instaObject._displayUrl =
-            i['image_versions2']['candidates'][0]['url'];
-            allDataApi.add(instaObject);
-          }
-      } else {
-        InstaPost instaObject = new InstaPost();
-        if (items.containsKey('video_versions')) {
-          var videoVersion = items['video_versions'];
-          instaObject._id = videoVersion[0]['id'];
-          instaObject._shortcode = items['pk'];
-          instaObject._displayUrl = "${videoVersion[0]['url']}.mp4";
-          instaObject._thumbnail = await VideoThumbnail.thumbnailData(
-            video: instaObject._displayUrl!,
-            imageFormat: ImageFormat.JPEG,
-            maxHeight: 0,
-            // maxWidth: ,
-            // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
-            quality: 100,
-          );
-          instaObject._isVideo = true;
-        } else {
-          instaObject._id = items['id'];
-          instaObject._shortcode = items['pk'];
-          instaObject._displayUrl =
-          items['image_versions2']['candidates'][0]['url'];
-        }
 
-        allDataApi.add(instaObject);
+            if (carousel_media[i].toString().contains('video_versions')) {
+              instaObject._displayUrl =
+              "${carousel_media[i]['video_versions'][0]['url'].toString()}.mp4";
+              instaObject._thumbnail = await VideoThumbnail.thumbnailData(
+                video: instaObject._displayUrl!,
+                imageFormat: ImageFormat.JPEG,
+                maxHeight: 0,
+                // maxWidth: ,
+                // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+                quality: 100,
+              );
+              //"${media_with_thumb[i]['thumbnail'].toString()}.mp4";
+              instaObject._isVideo = true;
+              allDataApi.add(instaObject);
+            } else {
+              instaObject._displayUrl =
+              "${carousel_media[i]['image_versions2']['candidates'][0]['url'].toString()}.jpg";
+              allDataApi.add(instaObject);
+            }
+          }
+        } else {
+          allDataApi.clear();
+        }
+      } else if (errorException().checkException(prefixPattern) &&
+          countCallRapidRequest == 4) {
+        //maatootz api post 50req/month
+        res = await yuananfPostApiRequest(paramShortcode);
+        countCallRapidRequest++;
+
+        if (errorException().checkException(res.toString()) &&
+            res != null &&
+            res.statusCode == 200) {
+          var data = res.data;
+          var items = data['items'][0];
+          List<dynamic>? carousel_media = items['carousel_media'];
+
+          for (int i = 0; i < carousel_media!.length; i++) {
+            InstaPost instaObject = new InstaPost();
+
+            if (carousel_media[i].toString().contains('video_versions')) {
+              instaObject._displayUrl =
+              "${carousel_media[i]['video_versions'][0]['url'].toString()}.mp4";
+              instaObject._thumbnail = await VideoThumbnail.thumbnailData(
+                video: instaObject._displayUrl!,
+                imageFormat: ImageFormat.JPEG,
+                maxHeight: 0,
+                // maxWidth: ,
+                // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+                quality: 100,
+              );
+              //"${media_with_thumb[i]['thumbnail'].toString()}.mp4";
+              instaObject._isVideo = true;
+              allDataApi.add(instaObject);
+            } else {
+              instaObject._displayUrl =
+              "${carousel_media[i]['image_versions2']['candidates'][0]['url'].toString()}.jpg";
+              allDataApi.add(instaObject);
+            }
+          }
+        } else {
+          allDataApi.clear();
+        }
+      } else if (errorException().checkException(prefixPattern) &&
+          countCallRapidRequest == 5) {
+        res = await netogamikkPostApiRequest(paramShortcode);
+        countCallRapidRequest++;
+
+        if (errorException().checkException(res.toString()) &&
+            res != null &&
+            res.statusCode == 200) {
+          var data = res.data['data'];
+          var graphql = data['graphql'];
+          var shortcode_media = graphql['shortcode_media'];
+          var edge_sidecar_to_children =
+          shortcode_media['edge_sidecar_to_children'];
+          List<dynamic>? listNode = edge_sidecar_to_children['edges'];
+          for (int i = 0; i < listNode!.length; i++) {
+            InstaPost instaObject = new InstaPost();
+
+            if (listNode[i]['node'].toString().contains('video_url')) {
+              instaObject._displayUrl =
+              "${listNode[i]['node']['video_url'].toString()}.mp4";
+              instaObject._thumbnail = await VideoThumbnail.thumbnailData(
+                video: instaObject._displayUrl!,
+                imageFormat: ImageFormat.JPEG,
+                maxHeight: 0,
+                // maxWidth: ,
+                // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+                quality: 100,
+              );
+              //"${media_with_thumb[i]['thumbnail'].toString()}.mp4";
+              instaObject._isVideo = true;
+              allDataApi.add(instaObject);
+            } else {
+              instaObject._displayUrl =
+              "${listNode[i]['node']['display_url'].toString()}.jpg";
+              allDataApi.add(instaObject);
+            }
+          }
+        } else {
+          allDataApi.clear();
+        }
+      } else if (errorException().checkException(prefixPattern) &&
+          countCallRapidRequest == 6) {
+        res = await socialapiPostApiRequest(paramShortcode);
+        countCallRapidRequest++;
+
+        if (errorException().checkException(res.toString()) &&
+            res != null &&
+            res.statusCode == 200) {
+          var data = res.data;
+          var items = data['data'];
+          List<dynamic>? carousel_media = items['carousel_media'];
+
+          for (int i = 0; i < carousel_media!.length; i++) {
+            InstaPost instaObject = new InstaPost();
+
+            if (carousel_media[i].toString().contains('video_versions')) {
+              instaObject._displayUrl =
+              "${carousel_media[i]['video_versions'][0]['url'].toString()}.mp4";
+              instaObject._thumbnail = await VideoThumbnail.thumbnailData(
+                video: instaObject._displayUrl!,
+                imageFormat: ImageFormat.JPEG,
+                maxHeight: 0,
+                // maxWidth: ,
+                // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+                quality: 100,
+              );
+              //"${media_with_thumb[i]['thumbnail'].toString()}.mp4";
+              instaObject._isVideo = true;
+              allDataApi.add(instaObject);
+            } else {
+              instaObject._displayUrl =
+              "${carousel_media[i]['image_versions2']['candidates'][0]['url'].toString()}.jpg";
+              allDataApi.add(instaObject);
+            }
+          }
+        } else {
+          allDataApi.clear();
+        }
+      } else if (errorException().checkException(prefixPattern) &&
+          countCallRapidRequest == 7) {
+        res = await nikansaraPostApiRequest(url);
+        countCallRapidRequest++;
+
+        if (res.statusCode == 200 &&
+            res.data.toString().isNotEmpty &&
+            res.data != null) {
+          var data = res.data;
+          var edge_sidecar_to_children = data['edge_sidecar_to_children'];
+          List<dynamic>? listNode = edge_sidecar_to_children['edges'];
+          for (int i = 0; i < listNode!.length; i++) {
+            InstaPost instaObject = new InstaPost();
+
+            if (listNode[i]['node'].toString().contains('video_url')) {
+              instaObject._displayUrl =
+              "${listNode[i]['node']['video_url'].toString()}.mp4";
+              instaObject._thumbnail = await VideoThumbnail.thumbnailData(
+                video: instaObject._displayUrl!,
+                imageFormat: ImageFormat.JPEG,
+                maxHeight: 0,
+                // maxWidth: ,
+                // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+                quality: 100,
+              );
+              //"${media_with_thumb[i]['thumbnail'].toString()}.mp4";
+              instaObject._isVideo = true;
+              allDataApi.add(instaObject);
+            } else {
+              instaObject._displayUrl =
+              "${listNode[i]['node']['display_url'].toString()}.jpg";
+              allDataApi.add(instaObject);
+            }
+          }
+        } else {
+          allDataApi.clear();
+        }
+      } else if (errorException().checkException(prefixPattern) &&
+          countCallRapidRequest == 8) {
+        res = await omarmhaimdatPostApiRequest(paramShortcode);
+        countCallRapidRequest++;
+
+        if (errorException().checkException(res.toString()) &&
+            res != null &&
+            res.statusCode == 200) {
+          var data = res.data;
+          var xdt_api__v1__media__shortcode__web_info =
+          data['xdt_api__v1__media__shortcode__web_info'];
+          var items = xdt_api__v1__media__shortcode__web_info['item'];
+          List<dynamic>? carousel_media = items[0]['carousel_media'];
+
+          for (int i = 0; i < carousel_media!.length; i++) {
+            InstaPost instaObject = new InstaPost();
+
+            if (carousel_media[i].toString().contains('video_versions')) {
+              instaObject._displayUrl =
+              "${carousel_media[i]['video_versions'][0]['url'].toString()}.mp4";
+              instaObject._thumbnail = await VideoThumbnail.thumbnailData(
+                video: instaObject._displayUrl!,
+                imageFormat: ImageFormat.JPEG,
+                maxHeight: 0,
+                // maxWidth: ,
+                // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+                quality: 100,
+              );
+              //"${media_with_thumb[i]['thumbnail'].toString()}.mp4";
+              instaObject._isVideo = true;
+              allDataApi.add(instaObject);
+            } else {
+              instaObject._displayUrl =
+              "${carousel_media[i]['image_versions2']['candidates'][0]['url'].toString()}.jpg";
+              allDataApi.add(instaObject);
+            }
+          }
+        } else {
+          allDataApi.clear();
+        }
+      } else if (errorException().checkException(prefixPattern) &&
+          countCallRapidRequest == 9) {
+        res = await thekirtanPostApiRequest(paramShortcode);
+        countCallRapidRequest++;
+
+        if (errorException().checkException(res.toString()) &&
+            res != null &&
+            res.statusCode == 200) {
+          var data = res.data;
+          var items = data[0];
+          List<dynamic>? carousel_media = items[0]['carousel_media'];
+
+          for (int i = 0; i < carousel_media!.length; i++) {
+            InstaPost instaObject = new InstaPost();
+
+            if (carousel_media[i].toString().contains('video_versions')) {
+              instaObject._displayUrl =
+              "${carousel_media[i]['video_versions']['candidates'][0]['url'].toString()}.mp4";
+              instaObject._thumbnail = await VideoThumbnail.thumbnailData(
+                video: instaObject._displayUrl!,
+                imageFormat: ImageFormat.JPEG,
+                maxHeight: 0,
+                // maxWidth: ,
+                // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+                quality: 100,
+              );
+              //"${media_with_thumb[i]['thumbnail'].toString()}.mp4";
+              instaObject._isVideo = true;
+              allDataApi.add(instaObject);
+            } else {
+              instaObject._displayUrl =
+              "${carousel_media[i]['image_versions2']['candidates'][0]['url'].toString()}.jpg";
+              allDataApi.add(instaObject);
+            }
+          }
+        } else {
+          allDataApi.clear();
+        }
+      } else if (errorException().checkException(prefixPattern) &&
+          countCallRapidRequest == 10) {
+        res = await maxcukerbergs007PostApiRequest(paramShortcode);
+        countCallRapidRequest++;
+
+        if (errorException().checkException(res.toString()) &&
+            res != null &&
+            res.statusCode == 200) {
+          var data = res.data;
+          var items = data['items'];
+          List<dynamic>? carousel_media = items[0]['carousel_media'];
+
+          for (int i = 0; i < carousel_media!.length; i++) {
+            InstaPost instaObject = new InstaPost();
+
+            if (carousel_media[i].toString().contains('video_versions')) {
+              instaObject._displayUrl =
+              "${carousel_media[i]['video_versions'][0]['url'].toString()}.mp4";
+              instaObject._thumbnail = await VideoThumbnail.thumbnailData(
+                video: instaObject._displayUrl!,
+                imageFormat: ImageFormat.JPEG,
+                maxHeight: 0,
+                // maxWidth: ,
+                // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+                quality: 100,
+              );
+              //"${media_with_thumb[i]['thumbnail'].toString()}.mp4";
+              instaObject._isVideo = true;
+              allDataApi.add(instaObject);
+            } else {
+              instaObject._displayUrl =
+              "${carousel_media[i]['image_versions2']['candidates'][0]['url'].toString()}.jpg";
+              allDataApi.add(instaObject);
+            }
+          }
+        } else {
+          allDataApi.clear();
+        }
+      } else if (errorException().checkException(prefixPattern) &&
+          countCallRapidRequest == 11) {
+        res = await mohammadtahapourabbasPostApiRequest(url);
+        countCallRapidRequest++;
+
+        if (errorException().checkException(res.toString()) &&
+            res != null &&
+            res.statusCode == 200) {
+          var data = res.data;
+          List<dynamic>? media = data['media'];
+
+          for (int i = 0; i < media!.length; i++) {
+            InstaPost instaObject = new InstaPost();
+
+            if (media[i]['is_video'] == true) {
+              instaObject._displayUrl = "${media[i]['url'].toString()}.mp4";
+              instaObject._thumbnail = await VideoThumbnail.thumbnailData(
+                video: instaObject._displayUrl!,
+                imageFormat: ImageFormat.JPEG,
+                maxHeight: 0,
+                // maxWidth: ,
+                // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+                quality: 100,
+              );
+              //"${media_with_thumb[i]['thumbnail'].toString()}.mp4";
+              instaObject._isVideo = true;
+              allDataApi.add(instaObject);
+            } else {
+              instaObject._displayUrl = "${media[i]['url'].toString()}.jpg";
+              allDataApi.add(instaObject);
+            }
+          }
+        } else {
+          allDataApi.clear();
+        }
+      } else if (errorException().checkException(prefixPattern) &&
+          countCallRapidRequest == 12) {
+        res = await mrnewton1PostApiRequest(paramShortcode);
+        countCallRapidRequest++;
+
+        if (res.statusCode == 200 &&
+            res.data.toString().isNotEmpty &&
+            res.data != null) {
+          var data = res.data;
+          var item = data['data'];
+          var xdt_shortcode_media = item['xdt_shortcode_media'];
+          var edge_sidecar_to_children =
+          xdt_shortcode_media['edge_sidecar_to_children'];
+          List<dynamic>? listNode = edge_sidecar_to_children['edges'];
+          for (int i = 0; i < listNode!.length; i++) {
+            InstaPost instaObject = new InstaPost();
+
+            if (listNode[i]['node'].toString().contains('video_url')) {
+              instaObject._displayUrl =
+              "${listNode[i]['node']['video_url'].toString()}.mp4";
+              instaObject._thumbnail = await VideoThumbnail.thumbnailData(
+                video: instaObject._displayUrl!,
+                imageFormat: ImageFormat.JPEG,
+                maxHeight: 0,
+                // maxWidth: ,
+                // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+                quality: 100,
+              );
+              //"${media_with_thumb[i]['thumbnail'].toString()}.mp4";
+              instaObject._isVideo = true;
+              allDataApi.add(instaObject);
+            } else {
+              instaObject._displayUrl =
+              "${listNode[i]['node']['display_url'].toString()}.jpg";
+              allDataApi.add(instaObject);
+            }
+          }
+        } else {
+          allDataApi.clear();
+        }
+      } else if (errorException().checkException(prefixPattern) &&
+          countCallRapidRequest == 13) {
+        res = await neotankPostApiRequest(paramShortcode);
+        countCallRapidRequest++;
+
+        if (res.statusCode == 200 &&
+            res.data.toString().isNotEmpty &&
+            res.data != null) {
+          var data = res.data;
+          var edge_sidecar_to_children = data['edge_sidecar_to_children'];
+          List<dynamic>? listNode = edge_sidecar_to_children['edges'];
+          for (int i = 0; i < listNode!.length; i++) {
+            InstaPost instaObject = new InstaPost();
+
+            if (listNode[i]['node'].toString().contains('video_url')) {
+              instaObject._displayUrl =
+              "${listNode[i]['node']['video_url'].toString()}.mp4";
+              instaObject._thumbnail = await VideoThumbnail.thumbnailData(
+                video: instaObject._displayUrl!,
+                imageFormat: ImageFormat.JPEG,
+                maxHeight: 0,
+                // maxWidth: ,
+                // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+                quality: 100,
+              );
+              //"${media_with_thumb[i]['thumbnail'].toString()}.mp4";
+              instaObject._isVideo = true;
+              allDataApi.add(instaObject);
+            } else {
+              instaObject._displayUrl =
+              "${listNode[i]['node']['display_url'].toString()}.jpg";
+              allDataApi.add(instaObject);
+            }
+          }
+        } else {
+          allDataApi.clear();
+        }
+      } else if (errorException().checkException(prefixPattern) &&
+          countCallRapidRequest == 14) {
+        //maatootz api post 50req/month
+        res = await illusionPostApiRequest(url);
+        countCallRapidRequest++;
+
+        if (errorException().checkException(res.toString()) &&
+            res != null &&
+            res.statusCode == 200) {
+          var data = res.data;
+          var items = data['items'];
+          List<dynamic>? carousel_media = items[0]['carousel_media'];
+
+          for (int i = 0; i < carousel_media!.length; i++) {
+            InstaPost instaObject = new InstaPost();
+
+            if (carousel_media[i].toString().contains('video_versions')) {
+              instaObject._displayUrl =
+              "${carousel_media[i]['video_versions'][0]['url'].toString()}.mp4";
+              instaObject._thumbnail = await VideoThumbnail.thumbnailData(
+                video: instaObject._displayUrl!,
+                imageFormat: ImageFormat.JPEG,
+                maxHeight: 0,
+                // maxWidth: ,
+                // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+                quality: 100,
+              );
+              //"${media_with_thumb[i]['thumbnail'].toString()}.mp4";
+              instaObject._isVideo = true;
+              allDataApi.add(instaObject);
+            } else {
+              instaObject._displayUrl =
+              "${carousel_media[i]['image_versions2']['candidates'][0]['url'].toString()}.jpg";
+              allDataApi.add(instaObject);
+            }
+          }
+        } else {
+          allDataApi.clear();
+        }
+      } else if (errorException().checkException(prefixPattern) &&
+          countCallRapidRequest == 15) {
+        //maatootz api post 50req/month
+        res = await justmobiPostApiRequest(url);
+        countCallRapidRequest++;
+
+        if (errorException().checkException(res.toString()) &&
+            res != null &&
+            res.statusCode == 200) {
+          var data = res.data;
+          var items = data['data'];
+          List<dynamic>? mediaList = items['mediaList'];
+
+          for (int i = 0; i < mediaList!.length; i++) {
+            InstaPost instaObject = new InstaPost();
+
+            if (mediaList[i].toString().contains('videoUrl')) {
+              instaObject._displayUrl =
+              "${mediaList[i]['videoUrl'].toString()}.mp4";
+              instaObject._thumbnail = await VideoThumbnail.thumbnailData(
+                video: instaObject._displayUrl!,
+                imageFormat: ImageFormat.JPEG,
+                maxHeight: 0,
+                // maxWidth: ,
+                // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+                quality: 100,
+              );
+              //"${media_with_thumb[i]['thumbnail'].toString()}.mp4";
+              instaObject._isVideo = true;
+              allDataApi.add(instaObject);
+            } else {
+              instaObject._displayUrl =
+              "${mediaList[i]['display_url'].toString()}.jpg";
+              allDataApi.add(instaObject);
+            }
+          }
+        } else {
+          allDataApi.clear();
+        }
+      } else if (errorException().checkException(prefixPattern) &&
+          countCallRapidRequest == 16) {
+        //maatootz api post 50req/month
+        res = await capungGGWPPostApiRequest(url);
+        countCallRapidRequest++;
+
+        if (errorException().checkException(res.toString()) &&
+            res != null &&
+            res.statusCode == 200) {
+          var data = res.data;
+          var media = data['media'];
+          List<dynamic>? children = media['children'];
+
+          for (int i = 0; i < children!.length; i++) {
+            InstaPost instaObject = new InstaPost();
+
+            if (children[i].toString().contains('video_url')) {
+              instaObject._displayUrl =
+              "${children[i]['video_url'].toString()}.mp4";
+              instaObject._thumbnail = await VideoThumbnail.thumbnailData(
+                video: instaObject._displayUrl!,
+                imageFormat: ImageFormat.JPEG,
+                maxHeight: 0,
+                // maxWidth: ,
+                // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+                quality: 100,
+              );
+              //"${media_with_thumb[i]['thumbnail'].toString()}.mp4";
+              instaObject._isVideo = true;
+              allDataApi.add(instaObject);
+            } else {
+              instaObject._displayUrl =
+              "${children[i]['display_url'].toString()}.jpg";
+              allDataApi.add(instaObject);
+            }
+          }
+        } else {
+          allDataApi.clear();
+        }
+      } else if (errorException().checkException(prefixPattern) &&
+          countCallRapidRequest == 17) {
+        //maatootz api post 50req/month
+        res = await instagapicomPostApiRequest(paramShortcode);
+        countCallRapidRequest++;
+
+        if (errorException().checkException(res.toString()) &&
+            res != null &&
+            res.statusCode == 200) {
+          var data = res.data;
+          var media = data['data'];
+          List<dynamic>? carousel_media = media['carousel_media'];
+
+          for (int i = 0; i < carousel_media!.length; i++) {
+            InstaPost instaObject = new InstaPost();
+
+            if (carousel_media[i].toString().contains('video_versions')) {
+              instaObject._displayUrl =
+              "${carousel_media[i][0]['url'].toString()}.mp4";
+              instaObject._thumbnail = await VideoThumbnail.thumbnailData(
+                video: instaObject._displayUrl!,
+                imageFormat: ImageFormat.JPEG,
+                maxHeight: 0,
+                // maxWidth: ,
+                // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+                quality: 100,
+              );
+              //"${media_with_thumb[i]['thumbnail'].toString()}.mp4";
+              instaObject._isVideo = true;
+              allDataApi.add(instaObject);
+            } else {
+              instaObject._displayUrl =
+              "${carousel_media[i]['image_versions2']['candidates'][0].toString()}.jpg";
+              allDataApi.add(instaObject);
+            }
+          }
+        } else {
+          allDataApi.clear();
+        }
+      } else if (errorException().checkException(prefixPattern) &&
+          countCallRapidRequest == 18) {
+        //maatootz api post 50req/month
+        res = await glavierPostApiRequest(paramShortcode);
+        countCallRapidRequest++;
+
+        if (res.statusCode == 200 &&
+            res.data.toString().isNotEmpty &&
+            res.data != null) {
+          var data = res.data;
+          var graphql = data['graphql'];
+          var shortcode_media = graphql['shortcode_media'];
+          var edge_sidecar_to_children =
+          shortcode_media['edge_sidecar_to_children'];
+          List<dynamic>? listNode = edge_sidecar_to_children['edges'];
+          for (int i = 0; i < listNode!.length; i++) {
+            InstaPost instaObject = new InstaPost();
+
+            if (listNode[i]['node'].toString().contains('video_url')) {
+              instaObject._displayUrl =
+              "${listNode[i]['node']['video_url'].toString()}.mp4";
+              instaObject._thumbnail = await VideoThumbnail.thumbnailData(
+                video: instaObject._displayUrl!,
+                imageFormat: ImageFormat.JPEG,
+                maxHeight: 0,
+                // maxWidth: ,
+                // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+                quality: 100,
+              );
+              //"${media_with_thumb[i]['thumbnail'].toString()}.mp4";
+              instaObject._isVideo = true;
+              allDataApi.add(instaObject);
+            } else {
+              instaObject._displayUrl =
+              "${listNode[i]['node']['display_url'].toString()}.jpg";
+              allDataApi.add(instaObject);
+            }
+          }
+        } else {
+          allDataApi.clear();
+        }
+      } else if (errorException().checkException(prefixPattern) &&
+          countCallRapidRequest == 19) {
+        //maatootz api post 50req/month
+        res = await maatootzPostApiRequest(url);
+        countCallRapidRequest++;
+
+        if (res.statusCode == 200 &&
+            res.data.toString().isNotEmpty &&
+            res.data != null) {
+          var data = res.data;
+          List<dynamic>? media_with_thumb = data['media_with_thumb'];
+          for (int i = 0; i < media_with_thumb!.length; i++) {
+            InstaPost instaObject = new InstaPost();
+
+            if (media_with_thumb[i]['Type'].toString().contains('Video')) {
+              instaObject._displayUrl =
+              "${media_with_thumb[i]['media'].toString()}.mp4";
+              instaObject._thumbnail = await VideoThumbnail.thumbnailData(
+                video: instaObject._displayUrl!,
+                imageFormat: ImageFormat.JPEG,
+                maxHeight: 0,
+                // maxWidth: ,
+                // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+                quality: 100,
+              );
+              //"${media_with_thumb[i]['thumbnail'].toString()}.mp4";
+              instaObject._isVideo = true;
+              allDataApi.add(instaObject);
+            } else {
+              instaObject._displayUrl =
+              "${media_with_thumb[i]['media'].toString()}.jpg";
+              allDataApi.add(instaObject);
+            }
+          }
+        } else {
+          allDataApi.clear();
+        }
+      } else if (errorException().checkException(prefixPattern) &&
+          countCallRapidRequest == 20) {
+        //maatootz api post 50req/month
+        res = await mrngstarPostApiRequest(paramShortcode);
+        countCallRapidRequest++;
+
+        if (res.statusCode == 200 &&
+            res.data.toString().isNotEmpty &&
+            res.data != null) {
+          var data = res.data;
+          var items = data['data'];
+          var edge_sidecar_to_children = items['edge_sidecar_to_children'];
+          List<dynamic>? listNode = edge_sidecar_to_children['edges'];
+          for (int i = 0; i < listNode!.length; i++) {
+            InstaPost instaObject = new InstaPost();
+
+            if (listNode[i]['node'].toString().contains('video_url')) {
+              instaObject._displayUrl =
+              "${listNode[i]['node']['video_url'].toString()}.mp4";
+              instaObject._thumbnail = await VideoThumbnail.thumbnailData(
+                video: instaObject._displayUrl!,
+                imageFormat: ImageFormat.JPEG,
+                maxHeight: 0,
+                // maxWidth: ,
+                // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+                quality: 100,
+              );
+              //"${media_with_thumb[i]['thumbnail'].toString()}.mp4";
+              instaObject._isVideo = true;
+              allDataApi.add(instaObject);
+            } else {
+              instaObject._displayUrl =
+              "${listNode[i]['node']['display_url'].toString()}.jpg";
+              allDataApi.add(instaObject);
+            }
+          }
+        } else {
+          allDataApi.clear();
+        }
+      } else if (prefixPattern.contains('graphql')) {
+        var data = res.data;
+        print("data receiver: $data");
+        Map items = data['graphql'];
+
+        Map shortcodeMedia = items['shortcode_media'];
+
+        if (shortcodeMedia.containsKey('edge_sidecar_to_children')) {
+          List<dynamic>? _listPost =
+          shortcodeMedia['edge_sidecar_to_children']['edges'];
+
+          if (_listPost!.isNotEmpty)
+            for (var i in _listPost) {
+              InstaPost instaObject = new InstaPost();
+              if (i['node']['is_video'] == true) {
+                instaObject._id = i['node']['id'];
+                instaObject._shortcode = i['node']['shortcode'];
+                instaObject._displayUrl = "${i['node']['video_url']}.mp4";
+                instaObject._thumbnail = await VideoThumbnail.thumbnailData(
+                  video: instaObject._displayUrl!,
+                  imageFormat: ImageFormat.JPEG,
+                  maxHeight: 0,
+                  // maxWidth: ,
+                  // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+                  quality: 100,
+                );
+                instaObject._isVideo = i['node']['is_video'];
+              } else {
+                instaObject._id = i['node']['id'];
+                instaObject._shortcode = i['node']['shortcode'];
+                instaObject._displayUrl = i['node']['display_url'];
+              }
+              allDataApi.add(instaObject);
+            }
+        } else {
+          InstaPost instaObject = new InstaPost();
+          if (shortcodeMedia['is_video'] == true) {
+            if (shortcodeMedia['display_url'] != null) {
+              instaObject._id = shortcodeMedia['id'];
+              instaObject._shortcode = shortcodeMedia['shortcode'];
+              instaObject._displayUrl = "${shortcodeMedia['video_url']}.mp4";
+              instaObject._thumbnail = await VideoThumbnail.thumbnailData(
+                video: instaObject._displayUrl!,
+                imageFormat: ImageFormat.JPEG,
+                maxHeight: 0,
+                // maxWidth: ,
+                // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+                quality: 100,
+              );
+              instaObject._isVideo = shortcodeMedia['is_video'];
+            } else {
+              instaObject._id = shortcodeMedia['id'];
+              instaObject._shortcode = shortcodeMedia['shortcode'];
+              instaObject._displayUrl = "${shortcodeMedia['video_url']}.mp4";
+              instaObject._thumbnail = await VideoThumbnail.thumbnailData(
+                video: instaObject._displayUrl!,
+                imageFormat: ImageFormat.JPEG,
+                maxHeight: 0,
+                // maxWidth: ,
+                // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+                quality: 100,
+              );
+              instaObject._isVideo = shortcodeMedia['is_video'];
+            }
+          } else {
+            if (shortcodeMedia['image_versions2'] == null) {
+              instaObject._id = shortcodeMedia['id'];
+              instaObject._shortcode = shortcodeMedia['shortcode'];
+              instaObject._displayUrl = shortcodeMedia['display_url'];
+            } else {
+              instaObject._id = shortcodeMedia['id'];
+              instaObject._shortcode = shortcodeMedia['pk'];
+              instaObject._displayUrl =
+              shortcodeMedia['image_versions2']['candidates'][0]['url'];
+            }
+          }
+
+          allDataApi.add(instaObject);
+        }
+      } else if (prefixPattern.contains('items')) {
+        // var data = res.data;
+        var data = res.data;
+        print("data receiver: $data");
+        // Map items = data['graphql'];
+
+        var items = data['items'][0];
+
+        if (items.containsKey('carousel_media')) {
+          List<dynamic>? _listPost = items['carousel_media'];
+
+          if (_listPost!.isNotEmpty)
+            for (var i in _listPost) {
+              InstaPost instaObject = new InstaPost();
+              instaObject._id = i['id'];
+              instaObject._shortcode = i['pk'];
+              instaObject._displayUrl =
+              i['image_versions2']['candidates'][0]['url'];
+              allDataApi.add(instaObject);
+            }
+        } else {
+          InstaPost instaObject = new InstaPost();
+          if (items.containsKey('video_versions')) {
+            var videoVersion = items['video_versions'];
+            instaObject._id = videoVersion[0]['id'];
+            instaObject._shortcode = items['pk'];
+            instaObject._displayUrl = "${videoVersion[0]['url']}.mp4";
+            instaObject._thumbnail = await VideoThumbnail.thumbnailData(
+              video: instaObject._displayUrl!,
+              imageFormat: ImageFormat.JPEG,
+              maxHeight: 0,
+              // maxWidth: ,
+              // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+              quality: 100,
+            );
+            instaObject._isVideo = true;
+          } else {
+            instaObject._id = items['id'];
+            instaObject._shortcode = items['pk'];
+            instaObject._displayUrl =
+            items['image_versions2']['candidates'][0]['url'];
+          }
+
+          allDataApi.add(instaObject);
+        }
+      } else if (countCallRapidRequest > 19) {
+        break;
+      } else {
+        countCallRapidRequest++;
+        // allDataApi.add(res.data.toString());
+        // allDataApi.add(res.data.toString());
+        print(res.data.toString());
       }
     }
-    else if (countCallRapidRequest > 6){
-      break;
-    }
-    else{
-      countCallRapidRequest++;
-      // allDataApi.add(res.data.toString());
-      // allDataApi.add(res.data.toString());
-      print(res.data.toString());
-    }
   }
 
 
-    //{"message":"Please wait a few minutes before you try again.","require_login":true,"status":"fail"}
-    // if (prefixPattern.contains(
-    //     "{message: Please wait a few minutes before you try again., require_login: true, status: fail}")) {
-    //   // res = await uzapishopPostApiRequest(url);
-    //
-    //   res = await uzapishopPostApiRequest(url);
-    //   // 0:"https://scontent.cdninstagram.com/v/t50.2886-16/377490711_175043198947964_587192338833431908_n.mp4?_nc_ht=scontent.cdninstagram.com&_nc_cat=108&_nc_ohc=DckoV_ndMEAAX8dR7sx&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfDsRRXV2Khk1MT3-8ldEIx5-5Dyr_Wah5GxswM1IpXuzg&oe=65153617&_nc_sid=10d13b"
-    //   // 1:"https://scontent.cdninstagram.com/v/t50.2886-16/376841088_1520790485394605_2697396614198064867_n.mp4?_nc_ht=scontent.cdninstagram.com&_nc_cat=105&_nc_ohc=27Vf9tOjvNIAX_7cNuf&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfB3SyzAvESj_0blyzV8AIexpPd4bBthOea020uEOLO8Fg&oe=6515762E&_nc_sid=10d13b"
-    //   // 2:"https://scontent.cdninstagram.com/v/t51.2885-15/376857140_1500057897410362_997120354491921715_n.jpg?stp=dst-jpg_e35_p1080x1080&_nc_ht=scontent.cdninstagram.com&_nc_cat=110&_nc_ohc=3A8ipUGwMKwAX8hBIA4&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfDEFmh8XZHdB3Qkieu1_FQZqR0QKWQYlW9rQbNview5QQ&oe=65197D5B&_nc_sid=10d13b"
-    //   var data = res.data;
-    //   for (int i = 0; i < data.length; i++) {
-    //     InstaPost instaObject = new InstaPost();
-    //     if (data[i].toString().contains("scontent.cdninstagram.com")) {
-    //       if (data[i].toString().contains(".mp4")) {
-    //         instaObject._displayUrl = "${data[i].toString()}.mp4";
-    //         // XFile thumbnailFile = await VideoThumbnail.thumbnailData(maxWidth: ,
-    //         //   video: instaObject._displayUrl!,
-    //         //   imageFormat: ImageFormat.JPEG,
-    //         //   maxHeight: 0,
-    //         //   // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
-    //         //   quality: 100,
-    //         // );
-    //         instaObject._thumbnail = await VideoThumbnail.thumbnailData(
-    //           video: instaObject._displayUrl!,
-    //           imageFormat: ImageFormat.JPEG,
-    //           maxHeight: 0,
-    //           // maxWidth: ,
-    //           // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
-    //           quality: 100,
-    //         );
-    //         instaObject._isVideo = true;
-    //       } else {
-    //         instaObject._displayUrl = "${data[i].toString()}.jpg";
-    //       }
-    //     } else if (data[i].toString().contains("instagrap.app")) {
-    //       res = await saidahrorPostApiRequest(url);
-    //       countCallRapidRequest++;
-    //       allDataApi.clear();
-    //     }
-    //
-    //
-    //     allDataApi.add(instaObject);
-    //   }
-    // }
-    // else if (prefixPattern.contains('graphql')) {
-    //   var data = res.data;
-    //   print("data receiver: $data");
-    //   Map items = data['graphql'];
-    //
-    //   Map shortcodeMedia = items['shortcode_media'];
-    //
-    //   if (shortcodeMedia.containsKey('edge_sidecar_to_children')) {
-    //     List<dynamic>? _listPost =
-    //     shortcodeMedia['edge_sidecar_to_children']['edges'];
-    //
-    //     if (_listPost!.isNotEmpty)
-    //       for (var i in _listPost) {
-    //         InstaPost instaObject = new InstaPost();
-    //         if (i['node']['is_video'] == true) {
-    //           instaObject._id = i['node']['id'];
-    //           instaObject._shortcode = i['node']['shortcode'];
-    //           instaObject._displayUrl = "${i['node']['video_url']}.mp4";
-    //           instaObject._thumbnail = await VideoThumbnail.thumbnailData(
-    //             video: instaObject._displayUrl!,
-    //             imageFormat: ImageFormat.JPEG,
-    //             maxHeight: 0,
-    //             // maxWidth: ,
-    //             // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
-    //             quality: 100,
-    //           );
-    //           instaObject._isVideo = i['node']['is_video'];
-    //         } else {
-    //           instaObject._id = i['node']['id'];
-    //           instaObject._shortcode = i['node']['shortcode'];
-    //           instaObject._displayUrl = i['node']['display_url'];
-    //         }
-    //         allDataApi.add(instaObject);
-    //       }
-    //   } else {
-    //     InstaPost instaObject = new InstaPost();
-    //     if (shortcodeMedia['is_video'] == true) {
-    //       if (shortcodeMedia['display_url'] != null) {
-    //         instaObject._id = shortcodeMedia['id'];
-    //         instaObject._shortcode = shortcodeMedia['shortcode'];
-    //         instaObject._displayUrl = "${shortcodeMedia['video_url']}.mp4";
-    //         instaObject._thumbnail = await VideoThumbnail.thumbnailData(
-    //           video: instaObject._displayUrl!,
-    //           imageFormat: ImageFormat.JPEG,
-    //           maxHeight: 0,
-    //           // maxWidth: ,
-    //           // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
-    //           quality: 100,
-    //         );
-    //         instaObject._isVideo = shortcodeMedia['is_video'];
-    //       } else {
-    //         instaObject._id = shortcodeMedia['id'];
-    //         instaObject._shortcode = shortcodeMedia['shortcode'];
-    //         instaObject._displayUrl = "${shortcodeMedia['video_url']}.mp4";
-    //         instaObject._thumbnail = await VideoThumbnail.thumbnailData(
-    //           video: instaObject._displayUrl!,
-    //           imageFormat: ImageFormat.JPEG,
-    //           maxHeight: 0,
-    //           // maxWidth: ,
-    //           // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
-    //           quality: 100,
-    //         );
-    //         instaObject._isVideo = shortcodeMedia['is_video'];
-    //       }
-    //     } else {
-    //       if (shortcodeMedia['image_versions2'] == null) {
-    //         instaObject._id = shortcodeMedia['id'];
-    //         instaObject._shortcode = shortcodeMedia['shortcode'];
-    //         instaObject._displayUrl = shortcodeMedia['display_url'];
-    //       } else {
-    //         instaObject._id = shortcodeMedia['id'];
-    //         instaObject._shortcode = shortcodeMedia['pk'];
-    //         instaObject._displayUrl =
-    //         shortcodeMedia['image_versions2']['candidates'][0]['url'];
-    //       }
-    //     }
-    //
-    //     allDataApi.add(instaObject);
-    //   }
-    // }
-    // else if (prefixPattern.contains('items')) {
-    //   // var data = res.data;
-    //   var data = res.data;
-    //   print("data receiver: $data");
-    //   // Map items = data['graphql'];
-    //
-    //   var items = data['items'][0];
-    //
-    //   if (items.containsKey('carousel_media')) {
-    //     List<dynamic>? _listPost = items['carousel_media'];
-    //
-    //     if (_listPost!.isNotEmpty)
-    //       for (var i in _listPost) {
-    //         InstaPost instaObject = new InstaPost();
-    //         instaObject._id = i['id'];
-    //         instaObject._shortcode = i['pk'];
-    //         instaObject._displayUrl =
-    //         i['image_versions2']['candidates'][0]['url'];
-    //         allDataApi.add(instaObject);
-    //       }
-    //   } else {
-    //     InstaPost instaObject = new InstaPost();
-    //     if (items.containsKey('video_versions')) {
-    //       var videoVersion = items['video_versions'];
-    //       instaObject._id = videoVersion[0]['id'];
-    //       instaObject._shortcode = items['pk'];
-    //       instaObject._displayUrl = "${videoVersion[0]['url']}.mp4";
-    //       instaObject._thumbnail = await VideoThumbnail.thumbnailData(
-    //         video: instaObject._displayUrl!,
-    //         imageFormat: ImageFormat.JPEG,
-    //         maxHeight: 0,
-    //         // maxWidth: ,
-    //         // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
-    //         quality: 100,
-    //       );
-    //       instaObject._isVideo = true;
-    //     } else {
-    //       instaObject._id = items['id'];
-    //       instaObject._shortcode = items['pk'];
-    //       instaObject._displayUrl =
-    //       items['image_versions2']['candidates'][0]['url'];
-    //     }
-    //
-    //     allDataApi.add(instaObject);
-    //   }
-    // }
-    // else {
-    //   // allDataApi.add(res.data.toString());
-    //   // allDataApi.add(res.data.toString());
-    //   print(res.data.toString());
-    // }
 
-    return allDataApi;
-  }
-
-
+  return allDataApi;
+}
